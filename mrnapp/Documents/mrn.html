@@ -1,0 +1,2908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>MRN (مرن) — Prototype</title>
+<!--
+  MRN (مرن) HTML Prototype
+  Based on MRN_Specification.docx — Sections 4, 5, 10
+  Patient data: Sarah Al-Mutairi (Week 6 of 16, Premium plan)
+
+  Structure:
+    1. Design tokens (CSS custom properties)
+    2. Reset + base styles
+    3. Phone frame (desktop only) + app viewport
+    4. Shared components (section label, divider, top bar, bottom nav, back bar)
+    5. Screen styles (home, nutrition, lab, profile, billing, plans, progress, stubs)
+    6. Markup — all screens rendered, hidden/shown via JS routing
+    7. State + data + routing (single commented JS block at bottom)
+
+  All tokens are named to map 1:1 to a future React Native theme file.
+  Inline comments flag values invented for the prototype that are not in the spec.
+-->
+<style>
+  /* =========================================================================
+     1. DESIGN TOKENS
+     Maps directly to Section 4 of MRN Specification
+     ========================================================================= */
+  :root {
+    /* Colours — from Section 4 */
+    --color-accent: #1D9E75;
+    --color-accent-light: #E1F5EE;
+    --color-accent-dark: #085041;
+    --color-text-primary: #1A1A18;
+    --color-text-secondary: #888780;
+    --color-bg-primary: #FFFFFF;
+    --color-bg-secondary: #F5F5F3;
+    --color-border-tertiary: #E8E8E6;
+    --color-danger: #A32D2D;
+    --color-danger-light: #FCEBEB;
+    --color-warn: #854F0B;
+    --color-warn-light: #FAEEDA;
+    --color-borderline: #185FA5;
+    --color-borderline-light: #E6F1FB;
+
+    /* Macro arc colours — from Section 5.1 (calories green, protein blue, fat amber, carbs pink) */
+    --color-macro-calories: #1D9E75;
+    --color-macro-protein: #185FA5;
+    --color-macro-fat: #C57B1F;
+    --color-macro-carbs: #C9447A;
+    --color-macro-track: #EEEEEC;
+
+    /* Typography — from Section 4 */
+    --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    --font-size-hero: 32px;
+    --font-size-body: 13px;
+    --font-size-sublabel: 11px;
+    --font-size-section-label: 10px;
+    --weight-regular: 400;
+    --weight-medium: 500;
+
+    /* Spacing — 22px horizontal section padding per Section 4 */
+    --space-section-x: 22px;
+    --space-section-y: 20px;
+    --space-divider: 0.5px;
+
+    /* Phone frame dimensions — iPhone 14 proportions */
+    --frame-width: 390px;
+    --frame-height: 844px;
+    --frame-radius: 44px;
+  }
+
+  /* =========================================================================
+     2. RESET + BASE
+     ========================================================================= */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font-system);
+    font-size: var(--font-size-body);
+    color: var(--color-text-primary);
+    background: #CFCFCB; /* neutral grey surround — only visible in desktop phone-frame view */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    line-height: 1.4;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+  svg { display: block; }
+
+  /* =========================================================================
+     3. PHONE FRAME + APP VIEWPORT
+     Hybrid: phone frame ≥500px viewport, full-viewport below.
+     App contents inside .app are identical in both modes — only the wrapper differs.
+     ========================================================================= */
+  .phone-frame {
+    width: var(--frame-width);
+    height: var(--frame-height);
+    background: var(--color-bg-primary);
+    border-radius: var(--frame-radius);
+    overflow: hidden;
+    box-shadow: 0 24px 60px -20px rgba(0,0,0,0.35), 0 0 0 10px #1A1A18;
+    position: relative;
+  }
+  .app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-secondary);
+    position: relative;
+    overflow: hidden;
+  }
+  .app__content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 80px; /* leave space above bottom nav */
+  }
+  .app__content::-webkit-scrollbar { width: 0; }
+
+  /* Mobile: drop phone frame entirely */
+  @media (max-width: 500px) {
+    body { background: var(--color-bg-secondary); }
+    .phone-frame {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+
+  /* =========================================================================
+     4. SHARED COMPONENTS
+     ========================================================================= */
+
+  /* Section label — 10px uppercase, Section 4 */
+  .section-label {
+    font-size: var(--font-size-section-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+  .section-label--count { color: var(--color-text-secondary); font-weight: var(--weight-regular); }
+
+  /* Section block — full-width, 22px horizontal padding, 0.5px divider between */
+  .section {
+    padding: var(--space-section-y) var(--space-section-x);
+    background: var(--color-bg-primary);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .section--tight { padding-top: 14px; padding-bottom: 14px; }
+  .section__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  /* Top bar — greeting / week chip / avatar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px var(--space-section-x);
+    background: var(--color-bg-primary);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .top-bar__greeting {
+    font-size: 15px;
+    font-weight: var(--weight-medium);
+  }
+  .top-bar__greeting-sub {
+    font-size: var(--font-size-sublabel);
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+  }
+  .week-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+    border-radius: 999px;
+    font-size: var(--font-size-sublabel);
+    font-weight: var(--weight-medium);
+  }
+  .week-chip__dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  /* Avatar */
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: var(--weight-medium);
+    flex-shrink: 0;
+  }
+  .avatar--lg { width: 64px; height: 64px; font-size: 22px; }
+  .avatar--ai { background: var(--color-accent); }
+
+  /* Simple back-bar for sub-pages */
+  .back-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px var(--space-section-x);
+    background: var(--color-bg-primary);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .back-bar__btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--color-text-primary);
+  }
+  .back-bar__title {
+    font-size: 15px;
+    font-weight: var(--weight-medium);
+  }
+
+  /* Bottom navigation */
+  .bottom-nav {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    background: var(--color-bg-primary);
+    border-top: var(--space-divider) solid var(--color-border-tertiary);
+    padding: 8px 12px 18px; /* extra bottom for home-indicator safe area */
+  }
+  .bottom-nav__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 0;
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.02em;
+  }
+  .bottom-nav__icon {
+    width: 54px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    transition: background 150ms ease;
+  }
+  .bottom-nav__item--active { color: var(--color-accent-dark); }
+  .bottom-nav__item--active .bottom-nav__icon {
+    background: var(--color-accent-light);
+  }
+
+  /* Sub-tab bar (used in Nutrition + Lab) */
+  .subtab-bar {
+    display: flex;
+    gap: 4px;
+    padding: 10px var(--space-section-x);
+    background: var(--color-bg-primary);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .subtab-bar__item {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+    border-radius: 8px;
+  }
+  .subtab-bar__item--active {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+  }
+
+  /* Status dot (used in 'all normal' marker list + trend dropdown) */
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot--normal { background: var(--color-accent); }
+  .status-dot--high { background: var(--color-danger); }
+  .status-dot--low { background: var(--color-warn); }
+  .status-dot--borderline { background: var(--color-borderline); }
+
+  /* Generic progress bar */
+  .progress-bar {
+    height: 4px;
+    background: var(--color-border-tertiary);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar__fill {
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: 999px;
+    transition: width 300ms ease;
+  }
+
+  /* =========================================================================
+     5. SCREEN-SPECIFIC STYLES
+     ========================================================================= */
+
+  /* ----- Home: body composition row ----- */
+  .bodycomp-row {
+    display: flex;
+    align-items: stretch;
+  }
+  .bodycomp-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 4px;
+  }
+  .bodycomp-stat + .bodycomp-stat {
+    border-left: var(--space-divider) solid var(--color-border-tertiary);
+    padding-left: 14px;
+    margin-left: 14px;
+  }
+  .bodycomp-stat__label { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+  .bodycomp-stat__value {
+    font-size: var(--font-size-hero);
+    font-weight: var(--weight-medium);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .bodycomp-stat__value-unit {
+    font-size: 14px;
+    font-weight: var(--weight-regular);
+    color: var(--color-text-secondary);
+    margin-left: 2px;
+  }
+  .bodycomp-stat__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: var(--font-size-sublabel);
+    color: var(--color-accent);
+  }
+  .bodycomp-stat__trend--neutral { color: var(--color-text-secondary); }
+
+  /* ----- Home: macro arcs row ----- */
+  .macro-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .macro-arc {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .macro-arc__svg {
+    width: 58px;
+    height: 58px;
+    position: relative;
+  }
+  .macro-arc__label {
+    font-size: var(--font-size-sublabel);
+    color: var(--color-text-secondary);
+  }
+  .macro-arc__value {
+    font-size: 12px;
+    font-weight: var(--weight-medium);
+  }
+
+  /* Last-logged meal strip */
+  .meal-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .meal-strip__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .meal-strip__name { font-size: 13px; font-weight: var(--weight-medium); }
+  .meal-strip__meta { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+  .meal-strip__link {
+    font-size: 12px;
+    color: var(--color-accent);
+    font-weight: var(--weight-medium);
+  }
+
+  /* ----- Home: activity row (water + walker) ----- */
+  .activity-row {
+    display: flex;
+    gap: 14px;
+  }
+  .activity-tile {
+    flex: 1;
+    background: var(--color-bg-secondary);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 148px;
+  }
+  .activity-tile__label { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+  .activity-tile__main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .activity-tile__value { font-size: 18px; font-weight: var(--weight-medium); }
+  .activity-tile__sub { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+
+  /* Water quick-add buttons */
+  .water-buttons {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .water-btn {
+    flex: 1;
+    padding: 6px;
+    background: var(--color-bg-primary);
+    border: var(--space-divider) solid var(--color-border-tertiary);
+    border-radius: 8px;
+    font-size: var(--font-size-sublabel);
+    font-weight: var(--weight-medium);
+    color: var(--color-accent-dark);
+  }
+  .water-btn:active { background: var(--color-accent-light); }
+
+  /* Walking-figure gentle bob animation */
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+  }
+  .walker-svg { animation: bob 1.4s ease-in-out infinite; }
+
+  /* Steps progress bar */
+  .steps-progress {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* ----- Home: AI nutritionist card ----- */
+  .ai-card {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .ai-card__body { flex: 1; }
+  .ai-card__message {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+  }
+  .ai-card__chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    background: var(--color-bg-secondary);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-primary);
+  }
+  .chip--accent {
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+  }
+
+  /* ----- Home: progress thumbnails ----- */
+  .progress-thumbs {
+    display: flex;
+    gap: 10px;
+  }
+  .thumb {
+    flex: 1;
+    aspect-ratio: 3 / 4;
+    background: linear-gradient(135deg, #E8E8E6 0%, #D5D5D2 100%);
+    border-radius: 12px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 10px;
+  }
+  .thumb__label {
+    font-size: var(--font-size-sublabel);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-primary);
+    background: rgba(255,255,255,0.85);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .goal-progress {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .goal-progress__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .goal-progress__label { color: var(--color-text-secondary); }
+  .goal-progress__value { font-weight: var(--weight-medium); }
+
+  /* ----- Home: flagged markers alerts ----- */
+  .flag-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .flag-row:last-child { margin-bottom: 0; }
+  .flag-row--high { background: var(--color-danger-light); color: var(--color-danger); }
+  .flag-row--low { background: var(--color-warn-light); color: var(--color-warn); }
+  .flag-row--borderline { background: var(--color-borderline-light); color: var(--color-borderline); }
+  .flag-row__left { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: var(--weight-medium); }
+  .flag-row__value { font-size: 13px; font-weight: var(--weight-medium); }
+
+  /* ----- Nutrition: Chat ----- */
+  .chat-stream {
+    padding: 16px var(--space-section-x);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .bubble-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .bubble-row--user { justify-content: flex-end; }
+  .bubble--ai {
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+    border-bottom-left-radius: 4px;
+  }
+  .bubble--user {
+    background: var(--color-bg-primary);
+    border: var(--space-divider) solid var(--color-border-tertiary);
+    color: var(--color-text-primary);
+    border-bottom-right-radius: 4px;
+  }
+  .bubble-row--user .avatar { display: none; }
+
+  .chat-input-area {
+    border-top: var(--space-divider) solid var(--color-border-tertiary);
+    background: var(--color-bg-primary);
+    padding: 10px var(--space-section-x) 14px;
+  }
+  .chip-scroll {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin: 0 calc(-1 * var(--space-section-x)) 0;
+    padding-left: var(--space-section-x);
+    padding-right: var(--space-section-x);
+  }
+  .chip-scroll::-webkit-scrollbar { display: none; }
+  .chip-scroll .chip { flex-shrink: 0; }
+
+  .chat-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--color-bg-secondary);
+    border-radius: 999px;
+  }
+  .chat-input__icon {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+  .chat-input__field {
+    flex: 1;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    padding: 4px 2px;
+  }
+  .chat-input__send {
+    width: 32px;
+    height: 32px;
+    background: var(--color-accent);
+    color: #fff;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ----- Nutrition: Today's log ----- */
+  .consumed-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .consumed-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .consumed-row__label { font-size: 12px; color: var(--color-text-secondary); }
+  .consumed-row__value { font-size: 12px; font-weight: var(--weight-medium); }
+  .consumed-row .progress-bar__fill { background: var(--color-macro-calories); }
+  .consumed-row--protein .progress-bar__fill { background: var(--color-macro-protein); }
+  .consumed-row--fat .progress-bar__fill { background: var(--color-macro-fat); }
+  .consumed-row--carbs .progress-bar__fill { background: var(--color-macro-carbs); }
+
+  .meal-slot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .meal-slot:last-child { border-bottom: none; }
+  .meal-slot__info { display: flex; flex-direction: column; gap: 3px; }
+  .meal-slot__name { font-size: 13px; font-weight: var(--weight-medium); }
+  .meal-slot__macros { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+  .meal-slot__right { display: flex; align-items: center; gap: 8px; }
+  .source-badge {
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+  }
+  .source-badge--saved { background: var(--color-bg-secondary); color: var(--color-text-secondary); }
+  .source-badge--empty { background: transparent; color: var(--color-text-secondary); }
+
+  .still-needed {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .still-needed__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 4px;
+    background: var(--color-bg-secondary);
+    border-radius: 10px;
+  }
+  .still-needed__value { font-size: 14px; font-weight: var(--weight-medium); }
+  .still-needed__label { font-size: 10px; color: var(--color-text-secondary); letter-spacing: 0.04em; text-transform: uppercase; }
+
+  .suggestion-card {
+    padding: 14px;
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+  .suggestion-card:last-child { margin-bottom: 0; }
+  .suggestion-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .suggestion-card__name { font-size: 13px; font-weight: var(--weight-medium); }
+  .suggestion-card__badge {
+    font-size: 10px;
+    padding: 3px 7px;
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+    border-radius: 999px;
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.02em;
+  }
+  .suggestion-card__badge--warn { background: var(--color-warn-light); color: var(--color-warn); }
+  .suggestion-card__impact {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .impact-pill {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: var(--color-bg-primary);
+    border-radius: 999px;
+    color: var(--color-text-secondary);
+    font-weight: var(--weight-medium);
+  }
+  .impact-pill strong {
+    color: var(--color-text-primary);
+    font-weight: var(--weight-medium);
+  }
+
+  /* ----- Lab: Blood markers tab ----- */
+  .top-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px var(--space-section-x);
+    background: var(--color-bg-primary);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .top-strip__info { display: flex; flex-direction: column; gap: 2px; }
+  .top-strip__label { font-size: 10px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.07em; }
+  .top-strip__value { font-size: 13px; font-weight: var(--weight-medium); }
+  .top-strip__btn {
+    padding: 7px 14px;
+    background: var(--color-accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: var(--weight-medium);
+  }
+
+  .flag-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .flag-card {
+    padding: 14px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .flag-card--high { background: var(--color-danger-light); }
+  .flag-card--low { background: var(--color-warn-light); }
+  .flag-card--borderline { background: var(--color-borderline-light); }
+  .flag-card--borderline-wide { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
+  .flag-card__head { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: var(--weight-medium); text-transform: uppercase; letter-spacing: 0.07em; }
+  .flag-card--high .flag-card__head { color: var(--color-danger); }
+  .flag-card--low .flag-card__head { color: var(--color-warn); }
+  .flag-card--borderline .flag-card__head { color: var(--color-borderline); }
+  .flag-card__name { font-size: 13px; font-weight: var(--weight-medium); color: var(--color-text-primary); }
+  .flag-card__value { font-size: 22px; font-weight: var(--weight-medium); color: var(--color-text-primary); letter-spacing: -0.01em; }
+  .flag-card__value-unit { font-size: 11px; font-weight: var(--weight-regular); color: var(--color-text-secondary); margin-left: 2px; }
+  .flag-card__range { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+  .flag-card__bar { height: 3px; background: rgba(0,0,0,0.06); border-radius: 999px; overflow: hidden; }
+  .flag-card__bar-fill { height: 100%; border-radius: 999px; }
+  .flag-card--high .flag-card__bar-fill { background: var(--color-danger); }
+  .flag-card--low .flag-card__bar-fill { background: var(--color-warn); }
+  .flag-card--borderline .flag-card__bar-fill { background: var(--color-borderline); }
+  .flag-card__left { display: flex; flex-direction: column; gap: 3px; }
+  .flag-card__right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+
+  /* Normal markers — category grouping */
+  .marker-category + .marker-category { margin-top: 20px; }
+  .marker-category__label {
+    font-size: var(--font-size-sublabel);
+    color: var(--color-text-secondary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: var(--weight-medium);
+  }
+  .normal-marker {
+    display: grid;
+    grid-template-columns: 14px 1fr 60px auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 0;
+  }
+  .normal-marker + .normal-marker { border-top: var(--space-divider) solid var(--color-border-tertiary); }
+  .normal-marker__name { font-size: 13px; }
+  .normal-marker__bar { height: 3px; background: var(--color-border-tertiary); border-radius: 999px; overflow: hidden; position: relative; }
+  .normal-marker__bar-dot {
+    position: absolute;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    transform: translate(-50%, -50%);
+  }
+  .normal-marker__value { font-size: 12px; font-weight: var(--weight-medium); text-align: right; white-space: nowrap; }
+
+  /* ----- Lab: InBody tab ----- */
+  .inbody-stat {
+    display: grid;
+    grid-template-columns: 1fr auto 60px;
+    gap: 12px;
+    align-items: center;
+    padding: 11px 0;
+  }
+  .inbody-stat + .inbody-stat { border-top: var(--space-divider) solid var(--color-border-tertiary); }
+  .inbody-stat__label { font-size: 13px; color: var(--color-text-secondary); }
+  .inbody-stat__value { font-size: 20px; font-weight: var(--weight-medium); letter-spacing: -0.01em; }
+  .inbody-stat__value-unit { font-size: 11px; font-weight: var(--weight-regular); color: var(--color-text-secondary); margin-left: 2px; }
+  .inbody-stat__bar { height: 3px; background: var(--color-border-tertiary); border-radius: 999px; overflow: hidden; }
+  .inbody-stat__bar-fill { height: 100%; background: var(--color-accent); border-radius: 999px; }
+
+  .segmental-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+  }
+  .segmental-legend {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 14px;
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .segmental-legend__item { display: flex; align-items: center; gap: 5px; }
+  .segmental-legend__swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+  .segmental-legend__swatch--lower { background: var(--color-warn); opacity: 0.7; }
+  .segmental-legend__swatch--higher { background: var(--color-accent); opacity: 0.4; }
+
+  /* InBody score card */
+  .score-card {
+    background: var(--color-accent-light);
+    padding: 16px;
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .score-card__label { font-size: var(--font-size-sublabel); color: var(--color-accent-dark); }
+  .score-card__value { font-size: 32px; font-weight: var(--weight-medium); color: var(--color-accent-dark); line-height: 1; }
+
+  /* ----- Lab: Trends tab ----- */
+  .trends-dropdown {
+    width: 100%;
+    padding: 14px;
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    cursor: pointer;
+  }
+  .trends-dropdown__left { display: flex; align-items: center; gap: 10px; }
+  .trends-dropdown__info { display: flex; flex-direction: column; gap: 2px; }
+  .trends-dropdown__name { font-size: 14px; font-weight: var(--weight-medium); }
+  .trends-dropdown__meta { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+  .trends-dropdown__chevron { color: var(--color-text-secondary); }
+
+  .trends-dropdown-panel {
+    position: absolute;
+    left: var(--space-section-x);
+    right: var(--space-section-x);
+    top: 70px;
+    background: var(--color-bg-primary);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px -8px rgba(0,0,0,0.18);
+    z-index: 20;
+    max-height: 420px;
+    overflow-y: auto;
+    display: none;
+  }
+  .trends-dropdown-panel--open { display: block; }
+  .trends-dropdown-group { padding: 10px 14px; }
+  .trends-dropdown-group + .trends-dropdown-group { border-top: var(--space-divider) solid var(--color-border-tertiary); }
+  .trends-dropdown-group__label {
+    font-size: var(--font-size-section-label);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: var(--weight-medium);
+    padding: 6px 0 8px;
+  }
+  .trends-dropdown-group--warn { background: var(--color-warn-light); }
+  .trends-dropdown-group--warn .trends-dropdown-group__label { color: var(--color-warn); }
+  .trends-dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    cursor: pointer;
+  }
+  .trends-dropdown-option__info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .trends-dropdown-option__name { font-size: 13px; font-weight: var(--weight-medium); }
+  .trends-dropdown-option__value { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+  .trends-dropdown-option__badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: var(--weight-medium);
+  }
+  .trends-dropdown-option__badge--high { background: var(--color-danger-light); color: var(--color-danger); }
+  .trends-dropdown-option__badge--low { background: var(--color-warn-light); color: var(--color-warn); }
+  .trends-dropdown-option__badge--borderline { background: var(--color-borderline-light); color: var(--color-borderline); }
+  .trends-dropdown-option__badge--normal { background: var(--color-accent-light); color: var(--color-accent-dark); }
+  .trends-dropdown-option__badge--ontrack { background: var(--color-accent-light); color: var(--color-accent-dark); }
+  .trends-dropdown-option--disabled { opacity: 0.42; cursor: default; }
+
+  .trend-chart-svg {
+    width: 100%;
+    height: 180px;
+    margin-top: 6px;
+  }
+  .trend-table {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .trend-table__head, .trend-table__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 10px 0;
+    font-size: 12px;
+  }
+  .trend-table__head {
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .trend-table__row + .trend-table__row { border-top: var(--space-divider) solid var(--color-border-tertiary); }
+  .trend-table__cell--value { font-weight: var(--weight-medium); }
+  .trend-table__cell--change-up { color: var(--color-accent); }
+  .trend-table__cell--change-down { color: var(--color-danger); }
+  .trend-table__cell--change-neutral { color: var(--color-text-secondary); }
+
+  .ai-observation {
+    margin-top: 16px;
+    padding: 14px;
+    background: var(--color-accent-light);
+    border-radius: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .ai-observation__body { font-size: 12px; color: var(--color-accent-dark); line-height: 1.5; flex: 1; }
+
+  /* ----- Profile ----- */
+  .identity-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .identity-info { display: flex; flex-direction: column; gap: 4px; }
+  .identity-info__name { font-size: 18px; font-weight: var(--weight-medium); }
+  .identity-info__meta { font-size: 12px; color: var(--color-text-secondary); }
+  .plan-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+
+  .accent-picker {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+  }
+  .accent-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+  }
+  .accent-swatch--active {
+    box-shadow: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-text-primary);
+  }
+
+  .profile-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+    cursor: pointer;
+  }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-row__label { font-size: 13px; color: var(--color-text-primary); }
+  .profile-row__right { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); }
+
+  .booking-strip {
+    padding: 14px var(--space-section-x);
+    background: var(--color-accent-light);
+    margin: 12px;
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .booking-strip__info { display: flex; flex-direction: column; gap: 2px; }
+  .booking-strip__label { font-size: 10px; color: var(--color-accent-dark); text-transform: uppercase; letter-spacing: 0.07em; font-weight: var(--weight-medium); }
+  .booking-strip__value { font-size: 13px; color: var(--color-accent-dark); font-weight: var(--weight-medium); }
+
+  .signout-row {
+    padding: 20px var(--space-section-x);
+    text-align: center;
+    font-size: 13px;
+    font-weight: var(--weight-medium);
+    color: var(--color-danger);
+  }
+
+  /* ----- Billing ----- */
+  .plan-card-billing {
+    padding: 18px;
+    background: var(--color-accent-light);
+    border-radius: 14px;
+    margin-bottom: 4px;
+  }
+  .plan-card-billing__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .plan-card-billing__name { font-size: 18px; font-weight: var(--weight-medium); color: var(--color-accent-dark); }
+  .plan-card-billing__price { font-size: 14px; font-weight: var(--weight-medium); color: var(--color-accent-dark); }
+  .plan-card-billing__renewal { font-size: var(--font-size-sublabel); color: var(--color-accent-dark); opacity: 0.75; }
+
+  .feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .feature-list__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .feature-list__label { color: var(--color-accent-dark); opacity: 0.85; }
+  .feature-list__value { color: var(--color-accent-dark); font-weight: var(--weight-medium); }
+
+  /* Core-view usage bar (shown when toggled) */
+  .usage-bar {
+    padding: 14px;
+    border: var(--space-divider) solid var(--color-border-tertiary);
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+  .usage-bar__head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .usage-bar__label { font-size: 12px; color: var(--color-text-secondary); }
+  .usage-bar__value { font-size: 12px; font-weight: var(--weight-medium); }
+  .usage-bar__note { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); margin-top: 6px; }
+  .usage-bar--warn .usage-bar__value { color: var(--color-warn); }
+
+  .annual-nudge {
+    background: var(--color-accent-light);
+    padding: 14px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .annual-nudge__left { display: flex; flex-direction: column; gap: 3px; }
+  .annual-nudge__title { font-size: 13px; font-weight: var(--weight-medium); color: var(--color-accent-dark); }
+  .annual-nudge__sub { font-size: var(--font-size-sublabel); color: var(--color-accent-dark); opacity: 0.8; }
+  .annual-nudge__btn {
+    padding: 7px 14px;
+    background: var(--color-accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: var(--weight-medium);
+  }
+
+  .payment-method {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+  }
+  .payment-card-logo {
+    width: 42px;
+    height: 28px;
+    background: #1A1A18;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 9px;
+    font-weight: var(--weight-medium);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.05em;
+  }
+  .payment-method__info { display: flex; flex-direction: column; gap: 2px; }
+  .payment-method__number { font-size: 13px; font-weight: var(--weight-medium); }
+  .payment-method__expiry { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+
+  .invoice-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .invoice-row:last-child { border-bottom: none; }
+  .invoice-row__left { display: flex; flex-direction: column; gap: 2px; }
+  .invoice-row__date { font-size: 12px; font-weight: var(--weight-medium); }
+  .invoice-row__plan { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+  .invoice-row__right { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .invoice-row__download { color: var(--color-accent); font-weight: var(--weight-medium); }
+
+  .what-premium-adds {
+    padding: 16px;
+    background: var(--color-accent-light);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .what-premium-adds__title { font-size: 13px; font-weight: var(--weight-medium); color: var(--color-accent-dark); margin-bottom: 4px; }
+  .what-premium-adds__item { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--color-accent-dark); }
+  .what-premium-adds__bullet { color: var(--color-accent); font-weight: var(--weight-medium); line-height: 1.4; }
+
+  /* Dev-only billing view toggle */
+  .dev-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-secondary);
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: var(--weight-medium);
+  }
+
+  /* ----- Plans comparison ----- */
+  .billing-toggle {
+    display: flex;
+    background: var(--color-bg-secondary);
+    padding: 4px;
+    border-radius: 999px;
+    margin: 14px var(--space-section-x) 0;
+  }
+  .billing-toggle__option {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+    border-radius: 999px;
+  }
+  .billing-toggle__option--active {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .billing-toggle__option sub {
+    font-size: 9px;
+    font-weight: var(--weight-medium);
+    color: var(--color-accent);
+    margin-left: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    vertical-align: baseline;
+  }
+
+  .plan-card {
+    padding: 18px;
+    background: var(--color-bg-primary);
+    border: var(--space-divider) solid var(--color-border-tertiary);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .plan-card--popular { border-color: var(--color-accent); border-width: 1.5px; }
+  .plan-card--premium-plus { border-color: var(--color-warn); border-width: 1.5px; }
+  .plan-card__badge {
+    position: absolute;
+    top: -10px;
+    left: 18px;
+    padding: 3px 10px;
+    background: var(--color-accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .plan-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .plan-card__name { font-size: 16px; font-weight: var(--weight-medium); }
+  .plan-card__price-wrap { text-align: right; }
+  .plan-card__price { font-size: 18px; font-weight: var(--weight-medium); }
+  .plan-card__price-unit { font-size: 11px; color: var(--color-text-secondary); }
+  .plan-card__key-limit { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 12px; }
+  .plan-card__differentiator { font-size: 12px; color: var(--color-text-primary); line-height: 1.5; margin-bottom: 14px; }
+  .plan-card__cta {
+    width: 100%;
+    padding: 10px;
+    background: var(--color-text-primary);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: var(--weight-medium);
+  }
+  .plan-card__cta--accent { background: var(--color-accent); }
+  .plan-card__cta--warn { background: var(--color-warn); }
+  .plan-card__cta--current {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    cursor: default;
+  }
+
+  .plans-footer {
+    padding: 14px var(--space-section-x) 24px;
+    font-size: var(--font-size-sublabel);
+    color: var(--color-text-secondary);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ----- Progress sub-page ----- */
+  .progress-hero {
+    padding: 20px var(--space-section-x);
+    background: var(--color-bg-primary);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .progress-hero__goal { font-size: 15px; font-weight: var(--weight-medium); margin-bottom: 4px; }
+  .progress-hero__sub { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); margin-bottom: 16px; }
+  .progress-hero__bar { height: 8px; background: var(--color-border-tertiary); border-radius: 999px; overflow: hidden; }
+  .progress-hero__bar-fill { height: 100%; background: var(--color-accent); border-radius: 999px; }
+  .progress-hero__meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: var(--font-size-sublabel);
+    color: var(--color-text-secondary);
+  }
+  .progress-compare {
+    display: flex;
+    gap: 12px;
+  }
+  .progress-compare__side { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .progress-compare__thumb {
+    aspect-ratio: 3 / 4;
+    background: linear-gradient(135deg, #E8E8E6 0%, #D5D5D2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: flex-end;
+    padding: 10px;
+  }
+  .progress-compare__label { font-size: 12px; font-weight: var(--weight-medium); text-align: center; }
+  .progress-compare__stats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+    font-size: var(--font-size-sublabel);
+    color: var(--color-text-secondary);
+  }
+
+  /* ----- Stub screens ----- */
+  .stub-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    gap: 14px;
+    color: var(--color-text-secondary);
+  }
+  .stub-screen__title { font-size: 15px; font-weight: var(--weight-medium); color: var(--color-text-primary); }
+  .stub-screen__body { font-size: 13px; line-height: 1.5; max-width: 260px; }
+  .stub-screen__tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 4px 10px;
+    background: var(--color-bg-primary);
+    border-radius: 999px;
+    color: var(--color-text-secondary);
+    font-weight: var(--weight-medium);
+  }
+
+  /* ----- Utility ----- */
+  .screen { display: none; }
+  .screen--active { display: block; }
+  .flex-screen { display: none; flex-direction: column; height: 100%; }
+  .flex-screen--active { display: flex; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="app" id="app">
+    <!-- Content area: every screen is rendered into the DOM and toggled via .screen--active -->
+    <div class="app__content" id="appContent"><!-- populated by JS below --></div>
+
+    <!-- Bottom navigation: persistent across all top-level screens -->
+    <nav class="bottom-nav" id="bottomNav">
+      <!-- populated by JS --></nav>
+  </div>
+</div>
+
+<script>
+/* =============================================================================
+   7. STATE, DATA, RENDERING, ROUTING
+   One commented block — all app behaviour lives here.
+   ============================================================================= */
+
+/* ----- 7.1 Sample data (Sarah Al-Mutairi — Section 10 of spec) ----- */
+/* Everything not explicitly in the spec is marked `// illustrative`. */
+const DATA = {
+  patient: {
+    firstName: 'Sarah',
+    lastName: 'Al-Mutairi',
+    initials: 'SA',
+    age: 31,
+    sex: 'F',
+    heightCm: 165,
+    activity: 'Lightly active',
+    plan: 'Premium',
+    programWeek: 6,
+    programTotalWeeks: 16,
+    streakDays: 14, // illustrative
+    onTrack: true,
+  },
+  goal: {
+    type: 'Reduce body fat',
+    from: 29.5,
+    to: 23.0,
+    unit: '%',
+    week: 6,
+    totalWeeks: 16,
+    percent: 37.5, // illustrative — (29.5 - 28.1) / (29.5 - 23.0)
+  },
+  bodyComp: {
+    weight: { value: 68.4, change: -2.6, unit: 'kg' },
+    bodyFat: { value: 28.1, change: -1.4, unit: '%' },
+    muscle: { value: 24.1, change: 0.3, unit: 'kg' },
+    fatMass: { value: 19.2, unit: 'kg' }, // illustrative — computed 68.4 * 0.281
+    bmr: { value: 1420, unit: 'kcal' },    // illustrative — Mifflin-St Jeor est.
+    visceralFat: { value: 6, unit: 'level' }, // illustrative
+  },
+  inbody: {
+    lastScanDate: 'Mar 5, 2026', // illustrative — ~6 weeks ago
+    score: 78, // illustrative
+    // per-segment muscle: kg + % of normal range. 100% = normal baseline.
+    segments: {
+      leftArm:  { kg: 2.4, pct: 98,  status: 'normal' },
+      rightArm: { kg: 2.5, pct: 102, status: 'normal' },
+      trunk:    { kg: 19.8, pct: 96, status: 'normal' },
+      leftLeg:  { kg: 7.6, pct: 91,  status: 'lower' },
+      rightLeg: { kg: 7.8, pct: 94,  status: 'normal' },
+    },
+  },
+  targets: {
+    calories: 1750,
+    protein: 110,
+    fat: 55,
+    carbs: 180,
+    water: 3300,
+  },
+  consumedToday: {
+    calories: 1000,   // 420 + 580
+    protein: 73,      // 35 + 38
+    fat: 32,          // illustrative split
+    carbs: 82,        // illustrative split
+    water: 1800,      // illustrative
+    steps: 6400,      // illustrative
+    stepsGoal: 8000,  // illustrative
+  },
+  meals: {
+    breakfast: { name: 'Eggs & labneh', calories: 420, protein: 35, fat: 22, carbs: 14, source: 'AI' },
+    lunch: { name: 'Chicken rice bowl', calories: 580, protein: 38, fat: 10, carbs: 68, source: 'AI' },
+    dinner: null,
+    snacks: null,
+  },
+  suggestions: [
+    { name: 'Grilled beef kofta with lentils', cal: 480, protein: 36, fat: 18, carbs: 42, badge: 'Best match today' },
+    { name: 'Spinach & salmon salad', cal: 420, protein: 34, fat: 22, carbs: 18, badge: 'Great for ferritin', warn: true },
+    { name: 'Chickpea & tahini bowl', cal: 460, protein: 22, fat: 20, carbs: 48, badge: 'Iron-rich' },
+  ],
+  markers: {
+    flagged: [
+      { name: 'Cortisol', value: 23, unit: 'µg/dL', range: '6–18', status: 'high', barPct: 92 },
+      { name: 'Ferritin', value: 18, unit: 'µg/L', range: '30–200', status: 'low', barPct: 14 },
+      { name: 'LDL', value: 118, unit: 'mg/dL', range: '<100', status: 'borderline', barPct: 65 },
+    ],
+    normal: [
+      // illustrative panel — grouped by category per spec
+      { category: 'Nutrients', name: 'Vitamin D', value: '42 ng/mL', range: '30–100', barPct: 18 },
+      { category: 'Nutrients', name: 'Vitamin B12', value: '580 pg/mL', range: '200–900', barPct: 54 },
+      { category: 'Nutrients', name: 'Magnesium', value: '2.1 mg/dL', range: '1.7–2.2', barPct: 82 },
+      { category: 'Nutrients', name: 'Folate', value: '12 ng/mL', range: '>5', barPct: 70 },
+      { category: 'Hormonal', name: 'TSH', value: '2.1 mIU/L', range: '0.4–4.0', barPct: 48 },
+      { category: 'Hormonal', name: 'Free T4', value: '1.3 ng/dL', range: '0.8–1.8', barPct: 52 },
+      { category: 'Hormonal', name: 'Estradiol', value: '128 pg/mL', range: '30–400', barPct: 26 },
+      { category: 'Metabolic', name: 'Glucose (fasting)', value: '88 mg/dL', range: '70–99', barPct: 62 },
+      { category: 'Metabolic', name: 'HbA1c', value: '5.2 %', range: '<5.7', barPct: 45 },
+      { category: 'Metabolic', name: 'Insulin', value: '6.4 µIU/mL', range: '2.6–24.9', barPct: 18 },
+      { category: 'Lipids', name: 'HDL', value: '62 mg/dL', range: '>50', barPct: 72 },
+      { category: 'Lipids', name: 'Triglycerides', value: '94 mg/dL', range: '<150', barPct: 38 },
+      { category: 'Lipids', name: 'Total cholesterol', value: '198 mg/dL', range: '<200', barPct: 88 },
+    ],
+    nextDraw: 'May 14, 2026', // illustrative — ~4 weeks out
+  },
+  // Trend data for the 5 wired markers
+  trends: {
+    cortisol: {
+      name: 'Cortisol', unit: 'µg/dL', status: 'high', defaultIdx: 0,
+      points: [
+        { date: 'Mar 5',  label: 'Week 0', value: 26 },
+        { date: 'Apr 2',  label: 'Week 3', value: 24 },
+        { date: 'Apr 16', label: 'Week 6', value: 23 },
+      ],
+      range: [6, 18],
+      observation: "Cortisol's easing — 26 down to 23 over six weeks, likely reflecting better sleep and meal timing. Still above range, so keep magnesium-rich meals consistent and caffeine capped at one coffee before noon.",
+    },
+    ferritin: {
+      name: 'Ferritin', unit: 'µg/L', status: 'low',
+      points: [
+        { date: 'Mar 5',  label: 'Week 0', value: 14 },
+        { date: 'Apr 2',  label: 'Week 3', value: 16 },
+        { date: 'Apr 16', label: 'Week 6', value: 18 },
+      ],
+      range: [30, 200],
+      observation: "Ferritin's climbing — 14 to 18 in six weeks. Progress is real but slow. Red meat or lentils at lunch paired with vitamin C will move this faster; if you want quicker results, Al Bannay does IV iron.",
+    },
+    ldl: {
+      name: 'LDL', unit: 'mg/dL', status: 'borderline',
+      points: [
+        { date: 'Mar 5',  label: 'Week 0', value: 128 },
+        { date: 'Apr 2',  label: 'Week 3', value: 122 },
+        { date: 'Apr 16', label: 'Week 6', value: 118 },
+      ],
+      range: [0, 100],
+      observation: "LDL's trending down — 128 to 118, steady improvement. Keep fish twice a week and the current fibre intake and this should cross under 100 by your next draw.",
+    },
+    bodyFat: {
+      name: 'Body fat %', unit: '%', status: 'ontrack',
+      points: [
+        { date: 'Mar 5',  label: 'Week 0', value: 29.5 },
+        { date: 'Apr 2',  label: 'Week 3', value: 28.8 },
+        { date: 'Apr 16', label: 'Week 6', value: 28.1 },
+      ],
+      range: [21, 30],
+      observation: "Down 1.4% over six weeks — that's exactly the pace your goal needs. Protein targets are the lever here, so keep closing those gaps at lunch and dinner.",
+    },
+    vitaminD: {
+      name: 'Vitamin D', unit: 'ng/mL', status: 'normal',
+      points: [
+        { date: 'Mar 5',  label: 'Week 0', value: 38 },
+        { date: 'Apr 2',  label: 'Week 3', value: 40 },
+        { date: 'Apr 16', label: 'Week 6', value: 42 },
+      ],
+      range: [30, 100],
+      observation: "Comfortably in range and rising — 38 to 42. Kuwait sun helps. Nothing to change here.",
+    },
+  },
+  // Scripted chat conversation — faithful to Section 6 tone rules
+  // 2-4 sentences per AI reply, references flagged markers, specific Kuwait-appropriate dishes, Al Bannay referral phrasing
+  chatHistory: [
+    { role: 'ai', text: "Morning Sarah. Ferritin's still low and yesterday's protein came up 18g short. Let's fix both at lunch — grilled beef kofta with a side of lentils hits iron and closes the protein gap." },
+    { role: 'user', text: "Sounds good. How much kofta?" },
+    { role: 'ai', text: "Around 150g — that's roughly 36g protein, 18g fat, and a solid iron dose. Pair with a squeeze of lemon on the lentils; vitamin C triples iron absorption." },
+    { role: 'user', text: "Logged eggs & labneh for breakfast, 3 eggs." },
+    { role: 'ai', text: "Logged — eggs & labneh. 420 kcal, 35g protein, 22g fat, 14g carbs. You've got 75g protein and 1,330 kcal remaining for the day." },
+    { role: 'user', text: "Can I take an iron supplement instead?" },
+    { role: 'ai', text: "That's outside what I can advise on dosing — Al Bannay Clinic is the right place. 2226 7222 or albannayclinic.net. They also offer IV iron if you want faster results on ferritin." },
+  ],
+  proactiveMessage: "Morning Sarah. Ferritin's still low and yesterday's protein came up 18g short. Let's fix both at lunch — grilled beef kofta with a side of lentils hits iron and closes the protein gap.",
+  billing: {
+    renewalDate: 'May 14, 2026',
+    monthlyPrice: 19,
+    annualPrice: 171,
+    card: { brand: 'VISA', last4: '4242', expiry: '08/28' },
+    history: [
+      { date: 'Apr 14, 2026', plan: 'Premium · Monthly', amount: '19.000 KWD' },
+      { date: 'Mar 14, 2026', plan: 'Premium · Monthly', amount: '19.000 KWD' },
+      { date: 'Feb 14, 2026', plan: 'Premium · Monthly', amount: '19.000 KWD' },
+    ],
+    // Core-view data (when dev toggle is flipped)
+    coreUsage: {
+      aiMessagesUsed: 14,
+      aiMessagesLimit: 20,
+      bloodTestsUsed: 1,
+      bloodTestsLimit: 3,
+    },
+  },
+  plans: [
+    { id: 'core', name: 'Core', monthly: 9, annual: 6.75, annualTotal: 81,
+      keyLimit: '20 AI messages/day · 30-day trends', differentiator: 'Entry tier — full AI nutritionist with daily cap.' },
+    { id: 'premium', name: 'Premium', monthly: 19, annual: 14.25, annualTotal: 171, popular: true, current: true,
+      keyLimit: 'Unlimited', differentiator: 'Unlimited AI · Sunday review · full trend history.' },
+    { id: 'premium-plus', name: 'Premium+', monthly: 32, annual: 27, annualTotal: 324, premiumPlus: true,
+      keyLimit: 'Unlimited', differentiator: 'Quarterly nutritionist consultation · 25% off blood draws · companion account at half price.' },
+    { id: 'family', name: 'Family', monthly: 45, annual: 37.50, annualTotal: 450,
+      keyLimit: '4 Premium accounts', differentiator: '4 independent Premium accounts, one billing relationship.' },
+  ],
+  notifications: {
+    // illustrative — only used on stub
+  },
+};
+
+/* ----- 7.2 Router state ----- */
+const state = {
+  currentScreen: 'home',       // 'home' | 'nutrition' | 'lab' | 'profile' | sub-pages
+  nutritionTab: 'chat',        // 'chat' | 'log'
+  labTab: 'blood',             // 'blood' | 'inbody' | 'trends'
+  trendMarker: 'cortisol',     // key of DATA.trends
+  trendsDropdownOpen: false,
+  billingCycle: 'monthly',     // 'monthly' | 'annual'
+  billingView: 'premium',      // 'premium' | 'core' — dev-only toggle
+  waterMl: DATA.consumedToday.water,
+};
+
+/* ----- 7.3 Small render helpers ----- */
+function el(tag, className, html) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (html !== undefined) node.innerHTML = html;
+  return node;
+}
+function pct(current, target) {
+  return Math.max(0, Math.min(100, (current / target) * 100));
+}
+function fmtChange(n, unit) {
+  const sign = n > 0 ? '+' : '';
+  return `${sign}${n}${unit}`;
+}
+
+/* =============================================================================
+   7.4 SVG COMPONENTS — reusable visual primitives
+   ============================================================================= */
+
+/* Macro arc — circular progress ring with centred percentage label.
+   Used on Home (nutrition section) and Today's log tab. */
+function macroArcSvg({ color, percent, valueText }) {
+  const size = 58;
+  const stroke = 6;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - Math.min(percent, 100) / 100);
+  return `
+    <svg class="macro-arc__svg" viewBox="0 0 ${size} ${size}">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}"
+              stroke="var(--color-macro-track)" stroke-width="${stroke}" fill="none"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}"
+              stroke="${color}" stroke-width="${stroke}" fill="none"
+              stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${offset}"
+              transform="rotate(-90 ${size/2} ${size/2})"/>
+      <text x="${size/2}" y="${size/2 + 4}" text-anchor="middle"
+            font-size="11" font-weight="500" fill="var(--color-text-primary)">
+        ${valueText}
+      </text>
+    </svg>`;
+}
+
+/* Water bottle with fill level — clipped rectangle rises inside bottle outline */
+function waterBottleSvg(currentMl, targetMl) {
+  const fillPct = Math.min(currentMl / targetMl, 1);
+  const fillY = 82 - (fillPct * 58); // bottle interior spans y=24 (top) to y=82 (bottom)
+  return `
+    <svg width="40" height="92" viewBox="0 0 40 92">
+      <defs>
+        <clipPath id="bottleInside">
+          <path d="M 8 24 L 8 82 Q 8 88 14 88 L 26 88 Q 32 88 32 82 L 32 24 Z"/>
+        </clipPath>
+      </defs>
+      <!-- cap -->
+      <rect x="15" y="2" width="10" height="10" rx="2" fill="var(--color-text-primary)" opacity="0.5"/>
+      <rect x="13" y="11" width="14" height="5" rx="1" fill="var(--color-text-primary)" opacity="0.7"/>
+      <!-- neck -->
+      <path d="M 14 16 L 14 24 L 26 24 L 26 16 Z" fill="var(--color-border-tertiary)"/>
+      <!-- body outline -->
+      <path d="M 8 24 L 8 82 Q 8 88 14 88 L 26 88 Q 32 88 32 82 L 32 24 Z"
+            fill="var(--color-bg-primary)" stroke="var(--color-text-secondary)" stroke-width="1"/>
+      <!-- water fill (clipped to bottle interior) -->
+      <rect x="8" y="${fillY}" width="24" height="${82 - fillY + 6}" fill="var(--color-accent)" opacity="0.75" clip-path="url(#bottleInside)">
+        <animate attributeName="y" from="82" to="${fillY}" dur="400ms" fill="freeze"/>
+      </rect>
+    </svg>`;
+}
+
+/* Walking figure silhouette — stylised, continuous gentle bob via CSS */
+function walkerSvg() {
+  return `
+    <svg class="walker-svg" width="42" height="64" viewBox="0 0 42 64" fill="var(--color-accent)">
+      <circle cx="21" cy="8" r="5"/>
+      <!-- torso -->
+      <path d="M 21 14 Q 18 24 16 36 L 20 38 Q 22 28 24 18 Z"/>
+      <!-- back leg -->
+      <path d="M 16 36 Q 12 46 10 58 L 14 58 Q 17 48 20 38 Z"/>
+      <!-- front leg (stepping) -->
+      <path d="M 22 30 Q 28 40 30 52 L 26 52 Q 24 44 20 36 Z"/>
+      <!-- back arm -->
+      <path d="M 20 18 Q 14 22 10 30 L 13 31 Q 18 24 22 20 Z"/>
+      <!-- front arm (swinging forward) -->
+      <path d="M 22 18 Q 30 20 34 28 L 31 30 Q 27 24 22 20 Z"/>
+    </svg>`;
+}
+
+/* Segmental muscle body figure — arms as diagonal paths, legs as rounded rects, trunk rounded rect.
+   Per-segment opacity encodes status: lower=0.4, normal=0.7, higher=0.9.
+   Labels positioned around figure with kg + %. */
+function segmentalBodySvg(segments) {
+  const op = (status) => status === 'lower' ? 0.45 : status === 'higher' ? 0.9 : 0.72;
+  const colour = (status) => status === 'lower' ? 'var(--color-warn)' : 'var(--color-accent)';
+  return `
+    <svg width="280" height="340" viewBox="0 0 280 340" xmlns="http://www.w3.org/2000/svg">
+      <!-- head -->
+      <circle cx="140" cy="32" r="20" fill="var(--color-accent)" opacity="0.6"/>
+      <!-- neck -->
+      <rect x="132" y="50" width="16" height="10" fill="var(--color-accent)" opacity="0.55"/>
+
+      <!-- left arm (diagonal outward) -->
+      <path d="M 118 66 L 72 128 L 58 122 L 108 58 Z"
+            fill="${colour(segments.leftArm.status)}" opacity="${op(segments.leftArm.status)}"/>
+      <!-- right arm (diagonal outward) -->
+      <path d="M 162 66 L 208 128 L 222 122 L 172 58 Z"
+            fill="${colour(segments.rightArm.status)}" opacity="${op(segments.rightArm.status)}"/>
+
+      <!-- trunk (rounded rectangle) -->
+      <rect x="108" y="60" width="64" height="120" rx="18"
+            fill="${colour(segments.trunk.status)}" opacity="${op(segments.trunk.status)}"/>
+
+      <!-- left leg (rounded rect) -->
+      <rect x="110" y="182" width="26" height="130" rx="13"
+            fill="${colour(segments.leftLeg.status)}" opacity="${op(segments.leftLeg.status)}"/>
+      <!-- right leg -->
+      <rect x="144" y="182" width="26" height="130" rx="13"
+            fill="${colour(segments.rightLeg.status)}" opacity="${op(segments.rightLeg.status)}"/>
+
+      <!-- labels: left arm -->
+      <text x="42" y="140" text-anchor="end" font-size="10" fill="var(--color-text-secondary)" font-weight="500">LEFT ARM</text>
+      <text x="42" y="154" text-anchor="end" font-size="12" fill="var(--color-text-primary)" font-weight="500">${segments.leftArm.kg} kg · ${segments.leftArm.pct}%</text>
+
+      <!-- labels: right arm -->
+      <text x="238" y="140" text-anchor="start" font-size="10" fill="var(--color-text-secondary)" font-weight="500">RIGHT ARM</text>
+      <text x="238" y="154" text-anchor="start" font-size="12" fill="var(--color-text-primary)" font-weight="500">${segments.rightArm.kg} kg · ${segments.rightArm.pct}%</text>
+
+      <!-- label: trunk (inline, right side) -->
+      <text x="238" y="116" text-anchor="start" font-size="10" fill="var(--color-text-secondary)" font-weight="500">TRUNK</text>
+      <text x="238" y="130" text-anchor="start" font-size="12" fill="var(--color-text-primary)" font-weight="500">${segments.trunk.kg} kg · ${segments.trunk.pct}%</text>
+
+      <!-- label: left leg -->
+      <text x="42" y="260" text-anchor="end" font-size="10" fill="var(--color-text-secondary)" font-weight="500">LEFT LEG</text>
+      <text x="42" y="274" text-anchor="end" font-size="12" fill="var(--color-text-primary)" font-weight="500">${segments.leftLeg.kg} kg · ${segments.leftLeg.pct}%</text>
+
+      <!-- label: right leg -->
+      <text x="238" y="260" text-anchor="start" font-size="10" fill="var(--color-text-secondary)" font-weight="500">RIGHT LEG</text>
+      <text x="238" y="274" text-anchor="start" font-size="12" fill="var(--color-text-primary)" font-weight="500">${segments.rightLeg.kg} kg · ${segments.rightLeg.pct}%</text>
+    </svg>`;
+}
+
+/* Trend line chart — 3 data points, grid lines, labelled points, month x-axis */
+function trendChartSvg(marker) {
+  const W = 340, H = 180;
+  const padLeft = 30, padRight = 16, padTop = 20, padBottom = 30;
+  const innerW = W - padLeft - padRight;
+  const innerH = H - padTop - padBottom;
+
+  const values = marker.points.map(p => p.value);
+  let minV = Math.min(...values, marker.range[0]);
+  let maxV = Math.max(...values, marker.range[1] || Math.max(...values) * 1.1);
+  const padV = (maxV - minV) * 0.15;
+  minV -= padV; maxV += padV;
+
+  const xFor = (i) => padLeft + (innerW * i) / (marker.points.length - 1);
+  const yFor = (v) => padTop + innerH - ((v - minV) / (maxV - minV)) * innerH;
+
+  // reference range band (if meaningful)
+  const band = marker.range[0] > minV && marker.range[1] < maxV ? `
+    <rect x="${padLeft}" y="${yFor(marker.range[1])}" width="${innerW}"
+          height="${yFor(marker.range[0]) - yFor(marker.range[1])}"
+          fill="var(--color-accent)" opacity="0.06"/>` : '';
+
+  // grid lines
+  const gridLines = [0.25, 0.5, 0.75].map(p => {
+    const y = padTop + innerH * p;
+    return `<line x1="${padLeft}" y1="${y}" x2="${W - padRight}" y2="${y}"
+                  stroke="var(--color-border-tertiary)" stroke-width="0.5"/>`;
+  }).join('');
+
+  // line path
+  const pathD = marker.points.map((p, i) =>
+    `${i === 0 ? 'M' : 'L'} ${xFor(i)} ${yFor(p.value)}`).join(' ');
+
+  const statusColour = marker.status === 'high' ? 'var(--color-danger)'
+                     : marker.status === 'low' ? 'var(--color-warn)'
+                     : marker.status === 'borderline' ? 'var(--color-borderline)'
+                     : 'var(--color-accent)';
+
+  // points + labels
+  const points = marker.points.map((p, i) => `
+    <circle cx="${xFor(i)}" cy="${yFor(p.value)}" r="5" fill="${statusColour}"/>
+    <circle cx="${xFor(i)}" cy="${yFor(p.value)}" r="2.5" fill="#fff"/>
+    <text x="${xFor(i)}" y="${yFor(p.value) - 12}" text-anchor="middle"
+          font-size="11" font-weight="500" fill="var(--color-text-primary)">${p.value}</text>
+    <text x="${xFor(i)}" y="${H - 10}" text-anchor="middle"
+          font-size="10" fill="var(--color-text-secondary)">${p.date}</text>
+  `).join('');
+
+  return `
+    <svg class="trend-chart-svg" viewBox="0 0 ${W} ${H}">
+      ${band}
+      ${gridLines}
+      <path d="${pathD}" fill="none" stroke="${statusColour}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      ${points}
+    </svg>`;
+}
+
+/* =============================================================================
+   7.5 SCREEN RENDERERS
+   ============================================================================= */
+
+/* ----- 7.5.1 Home screen ----- */
+function renderHome() {
+  const p = DATA.patient;
+  const g = DATA.goal;
+  const bc = DATA.bodyComp;
+  const c = DATA.consumedToday;
+  const t = DATA.targets;
+
+  return `
+    <section class="screen screen--home ${state.currentScreen === 'home' ? 'screen--active' : ''}" data-screen="home">
+
+      <!-- Top bar -->
+      <div class="top-bar">
+        <div>
+          <div class="top-bar__greeting">Good morning, ${p.firstName}</div>
+          <div class="week-chip" style="margin-top:6px;">
+            <span class="week-chip__dot"></span>
+            Week ${p.programWeek} of ${p.programTotalWeeks} · ${p.streakDays}-day streak
+          </div>
+        </div>
+        <div class="avatar">${p.initials}</div>
+      </div>
+
+      <!-- Body composition -->
+      <section class="section">
+        <div class="section__head"><div class="section-label">Body composition</div></div>
+        <div class="bodycomp-row">
+          <div class="bodycomp-stat">
+            <div class="bodycomp-stat__label">Weight</div>
+            <div class="bodycomp-stat__value">${bc.weight.value}<span class="bodycomp-stat__value-unit">${bc.weight.unit}</span></div>
+            <div class="bodycomp-stat__trend">↓ ${Math.abs(bc.weight.change)}${bc.weight.unit}</div>
+          </div>
+          <div class="bodycomp-stat">
+            <div class="bodycomp-stat__label">Body fat</div>
+            <div class="bodycomp-stat__value">${bc.bodyFat.value}<span class="bodycomp-stat__value-unit">${bc.bodyFat.unit}</span></div>
+            <div class="bodycomp-stat__trend">↓ ${Math.abs(bc.bodyFat.change)}${bc.bodyFat.unit}</div>
+          </div>
+          <div class="bodycomp-stat">
+            <div class="bodycomp-stat__label">Muscle</div>
+            <div class="bodycomp-stat__value">${bc.muscle.value}<span class="bodycomp-stat__value-unit">${bc.muscle.unit}</span></div>
+            <div class="bodycomp-stat__trend">↑ ${bc.muscle.change}${bc.muscle.unit}</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Today's nutrition -->
+      <section class="section">
+        <div class="section__head">
+          <div class="section-label">Today's nutrition</div>
+          <div class="section-label section-label--count">${c.calories} / ${t.calories} kcal</div>
+        </div>
+        <div class="macro-row">
+          <div class="macro-arc">
+            ${macroArcSvg({ color: 'var(--color-macro-calories)', percent: pct(c.calories, t.calories), valueText: Math.round(pct(c.calories, t.calories)) + '%' })}
+            <div class="macro-arc__label">Calories</div>
+            <div class="macro-arc__value">${c.calories} / ${t.calories}</div>
+          </div>
+          <div class="macro-arc">
+            ${macroArcSvg({ color: 'var(--color-macro-protein)', percent: pct(c.protein, t.protein), valueText: Math.round(pct(c.protein, t.protein)) + '%' })}
+            <div class="macro-arc__label">Protein</div>
+            <div class="macro-arc__value">${c.protein} / ${t.protein}g</div>
+          </div>
+          <div class="macro-arc">
+            ${macroArcSvg({ color: 'var(--color-macro-fat)', percent: pct(c.fat, t.fat), valueText: Math.round(pct(c.fat, t.fat)) + '%' })}
+            <div class="macro-arc__label">Fat</div>
+            <div class="macro-arc__value">${c.fat} / ${t.fat}g</div>
+          </div>
+          <div class="macro-arc">
+            ${macroArcSvg({ color: 'var(--color-macro-carbs)', percent: pct(c.carbs, t.carbs), valueText: Math.round(pct(c.carbs, t.carbs)) + '%' })}
+            <div class="macro-arc__label">Carbs</div>
+            <div class="macro-arc__value">${c.carbs} / ${t.carbs}g</div>
+          </div>
+        </div>
+        <div class="meal-strip">
+          <div class="meal-strip__info">
+            <div class="meal-strip__name">Last meal · ${DATA.meals.lunch.name}</div>
+            <div class="meal-strip__meta">${DATA.meals.lunch.calories} kcal · ${DATA.meals.lunch.protein}g protein</div>
+          </div>
+          <div class="meal-strip__link" data-nav="nutrition" data-subtab="log">View log →</div>
+        </div>
+      </section>
+
+      <!-- Activity -->
+      <section class="section">
+        <div class="section__head"><div class="section-label">Activity</div></div>
+        <div class="activity-row">
+          <div class="activity-tile">
+            <div class="activity-tile__label">Water</div>
+            <div class="activity-tile__main" id="waterBottleMount">${waterBottleSvg(state.waterMl, t.water)}</div>
+            <div>
+              <div class="activity-tile__value" id="waterValue">${(state.waterMl / 1000).toFixed(1)}L</div>
+              <div class="activity-tile__sub"><span id="waterRemain">${Math.max(0, t.water - state.waterMl)}ml</span> to goal</div>
+            </div>
+            <div class="water-buttons">
+              <button class="water-btn" data-water-add="250">+250ml</button>
+              <button class="water-btn" data-water-add="500">+500ml</button>
+            </div>
+          </div>
+          <div class="activity-tile">
+            <div class="activity-tile__label">Steps</div>
+            <div class="activity-tile__main">${walkerSvg()}</div>
+            <div>
+              <div class="activity-tile__value">${c.steps.toLocaleString()}</div>
+              <div class="activity-tile__sub">of ${c.stepsGoal.toLocaleString()} goal</div>
+            </div>
+            <div class="steps-progress">
+              <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(c.steps, c.stepsGoal)}%"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Nutritionist card -->
+      <section class="section">
+        <div class="section__head"><div class="section-label">AI nutritionist</div></div>
+        <div class="ai-card">
+          <div class="avatar avatar--ai">AI</div>
+          <div class="ai-card__body">
+            <div class="ai-card__message">${DATA.proactiveMessage}</div>
+            <div class="ai-card__chips">
+              <button class="chip chip--accent" data-nav="nutrition">What to eat?</button>
+              <button class="chip" data-nav="nutrition">Log a meal</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Progress -->
+      <section class="section">
+        <div class="section__head">
+          <div class="section-label">Progress</div>
+          <div class="section-label section-label--count">Week ${g.week} of ${g.totalWeeks}</div>
+        </div>
+        <div class="progress-thumbs">
+          <div class="thumb"><div class="thumb__label">Week 0</div></div>
+          <div class="thumb"><div class="thumb__label">Week 6</div></div>
+        </div>
+        <div class="goal-progress">
+          <div class="goal-progress__row">
+            <div class="goal-progress__label">Body fat ${g.from}% → ${g.to}%</div>
+            <div class="goal-progress__value">${g.percent}%</div>
+          </div>
+          <div class="progress-bar"><div class="progress-bar__fill" style="width:${g.percent}%"></div></div>
+        </div>
+      </section>
+
+      <!-- Health flags -->
+      <section class="section">
+        <div class="section__head">
+          <div class="section-label">Health flags</div>
+          <div class="section-label section-label--count">${DATA.markers.flagged.length} flagged</div>
+        </div>
+        ${DATA.markers.flagged.map(m => `
+          <div class="flag-row flag-row--${m.status}" data-nav="lab" data-subtab="blood">
+            <div class="flag-row__left">
+              <span>${m.status === 'high' ? '↑' : m.status === 'low' ? '↓' : '⚠'}</span>
+              <span>${m.name} · ${m.status.toUpperCase()}</span>
+            </div>
+            <div class="flag-row__value">${m.value} ${m.unit}</div>
+          </div>`).join('')}
+      </section>
+
+    </section>`;
+}
+
+/* ----- 7.5.2 Nutrition screen (two sub-tabs) ----- */
+function renderNutrition() {
+  return `
+    <section class="flex-screen ${state.currentScreen === 'nutrition' ? 'flex-screen--active' : ''}" data-screen="nutrition" style="height: 100%;">
+
+      <div class="top-bar">
+        <div>
+          <div class="top-bar__greeting">AI Nutritionist</div>
+          <div class="top-bar__greeting-sub">Your personal guide</div>
+        </div>
+        <div class="avatar avatar--ai">AI</div>
+      </div>
+
+      <div class="subtab-bar">
+        <button class="subtab-bar__item ${state.nutritionTab === 'chat' ? 'subtab-bar__item--active' : ''}" data-subtab-switch="chat">Chat</button>
+        <button class="subtab-bar__item ${state.nutritionTab === 'log' ? 'subtab-bar__item--active' : ''}" data-subtab-switch="log">Today's log</button>
+      </div>
+
+      ${state.nutritionTab === 'chat' ? renderChatTab() : renderLogTab()}
+
+    </section>`;
+}
+
+function renderChatTab() {
+  return `
+    <div class="chat-stream">
+      ${DATA.chatHistory.map(msg => {
+        if (msg.role === 'ai') return `
+          <div class="bubble-row">
+            <div class="avatar avatar--ai">AI</div>
+            <div class="bubble bubble--ai">${msg.text}</div>
+          </div>`;
+        return `
+          <div class="bubble-row bubble-row--user">
+            <div class="bubble bubble--user">${msg.text}</div>
+          </div>`;
+      }).join('')}
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chip-scroll">
+        <button class="chip">Log a meal</button>
+        <button class="chip">What should I eat?</button>
+        <button class="chip">Log manually</button>
+        <button class="chip">My targets</button>
+      </div>
+      <div class="chat-input">
+        <div class="chat-input__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+        <div class="chat-input__field">Ask a question or log a meal...</div>
+        <button class="chat-input__send">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>`;
+}
+
+function renderLogTab() {
+  const c = DATA.consumedToday;
+  const t = DATA.targets;
+  const meals = DATA.meals;
+  const remaining = {
+    calories: Math.max(0, t.calories - c.calories),
+    protein: Math.max(0, t.protein - c.protein),
+    fat: Math.max(0, t.fat - c.fat),
+    carbs: Math.max(0, t.carbs - c.carbs),
+  };
+
+  const mealRow = (slot, label) => {
+    const m = meals[slot];
+    if (!m) return `
+      <div class="meal-slot">
+        <div class="meal-slot__info">
+          <div class="meal-slot__name" style="color: var(--color-text-secondary); font-weight: 400;">${label}</div>
+          <div class="meal-slot__macros">Not logged yet</div>
+        </div>
+        <div class="meal-slot__right"><span class="source-badge source-badge--empty">+ Add</span></div>
+      </div>`;
+    return `
+      <div class="meal-slot">
+        <div class="meal-slot__info">
+          <div class="meal-slot__name">${label} · ${m.name}</div>
+          <div class="meal-slot__macros">${m.calories} kcal · ${m.protein}g P · ${m.fat}g F · ${m.carbs}g C</div>
+        </div>
+        <div class="meal-slot__right">
+          <span class="source-badge ${m.source === 'Saved' ? 'source-badge--saved' : ''}">${m.source}</span>
+        </div>
+      </div>`;
+  };
+
+  return `
+    <div style="overflow-y: auto; flex: 1;">
+      <section class="section">
+        <div class="section__head"><div class="section-label">Consumed today</div></div>
+        <div class="consumed-grid">
+          <div class="consumed-row">
+            <div class="consumed-row__label">Calories</div>
+            <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(c.calories, t.calories)}%"></div></div>
+            <div class="consumed-row__value">${c.calories} / ${t.calories}</div>
+          </div>
+          <div class="consumed-row consumed-row--protein">
+            <div class="consumed-row__label">Protein</div>
+            <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(c.protein, t.protein)}%"></div></div>
+            <div class="consumed-row__value">${c.protein} / ${t.protein}g</div>
+          </div>
+          <div class="consumed-row consumed-row--fat">
+            <div class="consumed-row__label">Fat</div>
+            <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(c.fat, t.fat)}%"></div></div>
+            <div class="consumed-row__value">${c.fat} / ${t.fat}g</div>
+          </div>
+          <div class="consumed-row consumed-row--carbs">
+            <div class="consumed-row__label">Carbs</div>
+            <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(c.carbs, t.carbs)}%"></div></div>
+            <div class="consumed-row__value">${c.carbs} / ${t.carbs}g</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Meals</div></div>
+        ${mealRow('breakfast', 'Breakfast')}
+        ${mealRow('lunch', 'Lunch')}
+        ${mealRow('dinner', 'Dinner')}
+        ${mealRow('snacks', 'Snacks')}
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Still needed</div></div>
+        <div class="still-needed">
+          <div class="still-needed__item"><div class="still-needed__value">${remaining.calories}</div><div class="still-needed__label">kcal</div></div>
+          <div class="still-needed__item"><div class="still-needed__value">${remaining.protein}g</div><div class="still-needed__label">Protein</div></div>
+          <div class="still-needed__item"><div class="still-needed__value">${remaining.fat}g</div><div class="still-needed__label">Fat</div></div>
+          <div class="still-needed__item"><div class="still-needed__value">${remaining.carbs}g</div><div class="still-needed__label">Carbs</div></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Suggestions</div></div>
+        ${DATA.suggestions.map(s => `
+          <div class="suggestion-card">
+            <div class="suggestion-card__head">
+              <div class="suggestion-card__name">${s.name}</div>
+              <div class="suggestion-card__badge ${s.warn ? 'suggestion-card__badge--warn' : ''}">${s.badge}</div>
+            </div>
+            <div class="suggestion-card__impact">
+              <span class="impact-pill"><strong>${s.cal}</strong> kcal</span>
+              <span class="impact-pill"><strong>${s.protein}g</strong> protein</span>
+              <span class="impact-pill"><strong>${s.fat}g</strong> fat</span>
+              <span class="impact-pill"><strong>${s.carbs}g</strong> carbs</span>
+            </div>
+          </div>`).join('')}
+      </section>
+    </div>`;
+}
+
+/* ----- 7.5.3 Lab screen (three sub-tabs) ----- */
+function renderLab() {
+  return `
+    <section class="flex-screen ${state.currentScreen === 'lab' ? 'flex-screen--active' : ''}" data-screen="lab" style="height: 100%;">
+      <div class="top-bar">
+        <div>
+          <div class="top-bar__greeting">Health data</div>
+          <div class="top-bar__greeting-sub">Blood · InBody · Trends</div>
+        </div>
+        <div class="avatar">${DATA.patient.initials}</div>
+      </div>
+
+      <div class="subtab-bar">
+        <button class="subtab-bar__item ${state.labTab === 'blood' ? 'subtab-bar__item--active' : ''}" data-labtab-switch="blood">Blood markers</button>
+        <button class="subtab-bar__item ${state.labTab === 'inbody' ? 'subtab-bar__item--active' : ''}" data-labtab-switch="inbody">InBody</button>
+        <button class="subtab-bar__item ${state.labTab === 'trends' ? 'subtab-bar__item--active' : ''}" data-labtab-switch="trends">Trends</button>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1; position: relative;">
+        ${state.labTab === 'blood' ? renderBloodTab()
+          : state.labTab === 'inbody' ? renderInBodyTab()
+          : renderTrendsTab()}
+      </div>
+    </section>`;
+}
+
+function renderBloodTab() {
+  const flagged = DATA.markers.flagged;
+  const highLow = flagged.filter(m => m.status !== 'borderline');
+  const borderline = flagged.filter(m => m.status === 'borderline');
+
+  // Group normal markers by category
+  const categories = ['Nutrients', 'Hormonal', 'Metabolic', 'Lipids'];
+  const byCategory = categories.map(cat => ({
+    name: cat,
+    items: DATA.markers.normal.filter(m => m.category === cat),
+  }));
+
+  // Lab tab is VIEW-ONLY — no upload functionality here.
+  // "Book now" initiates a phone call to Al Bannay Clinic.
+  // Blood test and InBody uploads live in Profile.
+  return `
+    <div class="top-strip">
+      <div class="top-strip__info">
+        <div class="top-strip__label">Next blood draw</div>
+        <div class="top-strip__value">${DATA.markers.nextDraw}</div>
+      </div>
+      <a href="tel:22267222" class="top-strip__btn" style="text-decoration:none;color:#fff;">Book now</a>
+    </div>
+
+    <section class="section">
+      <div class="section__head">
+        <div class="section-label">Needs attention</div>
+        <div class="section-label section-label--count">${flagged.length} flagged</div>
+      </div>
+
+      <div class="flag-grid">
+        ${highLow.map(m => `
+          <div class="flag-card flag-card--${m.status}">
+            <div class="flag-card__head">
+              <span>${m.status === 'high' ? '↑ HIGH' : '↓ LOW'}</span>
+            </div>
+            <div class="flag-card__name">${m.name}</div>
+            <div class="flag-card__value">${m.value}<span class="flag-card__value-unit">${m.unit}</span></div>
+            <div class="flag-card__range">Range ${m.range}</div>
+            <div class="flag-card__bar"><div class="flag-card__bar-fill" style="width:${m.barPct}%"></div></div>
+          </div>`).join('')}
+
+        ${borderline.map(m => `
+          <div class="flag-card flag-card--borderline flag-card--borderline-wide">
+            <div class="flag-card__left">
+              <div class="flag-card__head"><span>⚠ BORDERLINE</span></div>
+              <div class="flag-card__name">${m.name}</div>
+              <div class="flag-card__range">Range ${m.range}</div>
+            </div>
+            <div class="flag-card__right">
+              <div class="flag-card__value">${m.value}<span class="flag-card__value-unit">${m.unit}</span></div>
+              <div class="flag-card__bar" style="width: 90px;"><div class="flag-card__bar-fill" style="width:${m.barPct}%"></div></div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section__head">
+        <div class="section-label">All normal</div>
+        <div class="section-label section-label--count">${DATA.markers.normal.length} markers</div>
+      </div>
+
+      ${byCategory.map(cat => cat.items.length === 0 ? '' : `
+        <div class="marker-category">
+          <div class="marker-category__label">${cat.name}</div>
+          ${cat.items.map(m => `
+            <div class="normal-marker">
+              <div class="normal-marker__bar-wrap" style="position: relative;">
+                <span class="status-dot status-dot--normal"></span>
+              </div>
+              <div class="normal-marker__name">${m.name}</div>
+              <div class="normal-marker__bar">
+                <div class="normal-marker__bar-dot" style="left:${m.barPct}%"></div>
+              </div>
+              <div class="normal-marker__value">${m.value}</div>
+            </div>`).join('')}
+        </div>`).join('')}
+    </section>`;
+}
+
+function renderInBodyTab() {
+  const bc = DATA.bodyComp;
+  const ib = DATA.inbody;
+  return `
+    <div class="top-strip">
+      <div class="top-strip__info">
+        <div class="top-strip__label">Last InBody scan</div>
+        <div class="top-strip__value">${ib.lastScanDate}</div>
+      </div>
+      <a href="tel:22267222" class="top-strip__btn" style="text-decoration:none;color:#fff;">Book scan</a>
+    </div>
+
+    <section class="section">
+      <div class="score-card">
+        <div>
+          <div class="score-card__label">INBODY SCORE</div>
+          <div style="font-size: 10px; color: var(--color-accent-dark); opacity: 0.7; margin-top: 2px;">Composite body composition score</div>
+        </div>
+        <div class="score-card__value">${ib.score}</div>
+      </div>
+
+      <div class="section__head" style="margin-top: 4px;"><div class="section-label">Body composition</div></div>
+
+      <div class="inbody-stat">
+        <div class="inbody-stat__label">Weight</div>
+        <div class="inbody-stat__value">${bc.weight.value}<span class="inbody-stat__value-unit">kg</span></div>
+        <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:62%"></div></div>
+      </div>
+      <div class="inbody-stat">
+        <div class="inbody-stat__label">Body fat %</div>
+        <div class="inbody-stat__value">${bc.bodyFat.value}<span class="inbody-stat__value-unit">%</span></div>
+        <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:70%; background: var(--color-warn);"></div></div>
+      </div>
+      <div class="inbody-stat">
+        <div class="inbody-stat__label">Muscle mass</div>
+        <div class="inbody-stat__value">${bc.muscle.value}<span class="inbody-stat__value-unit">kg</span></div>
+        <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:58%"></div></div>
+      </div>
+      <div class="inbody-stat">
+        <div class="inbody-stat__label">Fat mass</div>
+        <div class="inbody-stat__value">${bc.fatMass.value}<span class="inbody-stat__value-unit">kg</span></div>
+        <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:68%; background: var(--color-warn);"></div></div>
+      </div>
+      <div class="inbody-stat">
+        <div class="inbody-stat__label">BMR</div>
+        <div class="inbody-stat__value">${bc.bmr.value}<span class="inbody-stat__value-unit">kcal</span></div>
+        <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:54%"></div></div>
+      </div>
+      <div class="inbody-stat">
+        <div class="inbody-stat__label">Visceral fat</div>
+        <div class="inbody-stat__value">${bc.visceralFat.value}<span class="inbody-stat__value-unit">level</span></div>
+        <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:35%"></div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section__head"><div class="section-label">Segmental muscle</div></div>
+      <div class="segmental-wrapper">${segmentalBodySvg(ib.segments)}</div>
+      <div class="segmental-legend">
+        <div class="segmental-legend__item"><span class="segmental-legend__swatch segmental-legend__swatch--lower"></span>Lower</div>
+        <div class="segmental-legend__item"><span class="segmental-legend__swatch"></span>Normal</div>
+        <div class="segmental-legend__item"><span class="segmental-legend__swatch segmental-legend__swatch--higher"></span>Higher</div>
+      </div>
+    </section>`;
+}
+
+function renderTrendsTab() {
+  const marker = DATA.trends[state.trendMarker];
+  const statusLabel = {
+    high: 'HIGH', low: 'LOW', borderline: 'BORDERLINE', normal: 'NORMAL', ontrack: 'ON TRACK',
+  }[marker.status];
+
+  // Compute table rows (with change vs previous)
+  const tableRows = marker.points.map((p, i) => {
+    if (i === 0) return { ...p, change: '—', changeClass: 'neutral' };
+    const prev = marker.points[i - 1].value;
+    const diff = p.value - prev;
+    // Determine whether a positive or negative change is good, based on marker status
+    const isLowerBetter = marker.status === 'high' || marker.status === 'borderline';
+    const isHigherBetter = marker.status === 'low';
+    const sign = diff > 0 ? '+' : '';
+    let cls = 'neutral';
+    if (diff !== 0) {
+      if (isLowerBetter) cls = diff < 0 ? 'up' : 'down';
+      else if (isHigherBetter) cls = diff > 0 ? 'up' : 'down';
+      else cls = diff > 0 ? 'down' : 'up';
+    }
+    return { ...p, change: `${sign}${diff.toFixed(1)}`, changeClass: cls };
+  });
+
+  return `
+    <section class="section" style="position: relative;">
+      <div class="trends-dropdown" data-trends-dropdown>
+        <div class="trends-dropdown__left">
+          <span class="status-dot status-dot--${marker.status === 'ontrack' ? 'normal' : marker.status}"></span>
+          <div class="trends-dropdown__info">
+            <div class="trends-dropdown__name">${marker.name}</div>
+            <div class="trends-dropdown__meta">${marker.points[marker.points.length-1].value} ${marker.unit} · ${statusLabel}</div>
+          </div>
+        </div>
+        <div class="trends-dropdown__chevron">⌵</div>
+      </div>
+
+      ${state.trendsDropdownOpen ? renderTrendsDropdownPanel() : ''}
+
+      ${trendChartSvg(marker)}
+
+      <div class="trend-table">
+        <div class="trend-table__head">
+          <div>Date</div>
+          <div>Value</div>
+          <div>Change</div>
+        </div>
+        ${tableRows.map(r => `
+          <div class="trend-table__row">
+            <div>${r.date}</div>
+            <div class="trend-table__cell--value">${r.value} ${marker.unit}</div>
+            <div class="trend-table__cell--change-${r.changeClass}">${r.change}</div>
+          </div>`).join('')}
+      </div>
+
+      <div class="ai-observation">
+        <div class="avatar avatar--ai" style="width: 28px; height: 28px; font-size: 10px;">AI</div>
+        <div class="ai-observation__body">${marker.observation}</div>
+      </div>
+    </section>`;
+}
+
+function renderTrendsDropdownPanel() {
+  const flagged = ['cortisol', 'ferritin', 'ldl'];
+  const bodyComp = ['bodyFat'];
+  const normal = ['vitaminD'];
+
+  const opt = (key, disabled = false) => {
+    const m = DATA.trends[key];
+    if (!m) {
+      // Disabled / placeholder option
+      return `<div class="trends-dropdown-option trends-dropdown-option--disabled">
+        <span class="status-dot status-dot--normal"></span>
+        <div class="trends-dropdown-option__info">
+          <div class="trends-dropdown-option__name">${key}</div>
+          <div class="trends-dropdown-option__value">— —</div>
+        </div>
+      </div>`;
+    }
+    const statusLabel = { high: 'HIGH', low: 'LOW', borderline: 'BORDERLINE', normal: 'NORMAL', ontrack: 'ON TRACK' }[m.status];
+    const statusKey = m.status === 'ontrack' ? 'ontrack' : m.status;
+    return `
+      <div class="trends-dropdown-option" data-trend-select="${key}">
+        <span class="status-dot status-dot--${m.status === 'ontrack' ? 'normal' : m.status}"></span>
+        <div class="trends-dropdown-option__info">
+          <div class="trends-dropdown-option__name">${m.name}</div>
+          <div class="trends-dropdown-option__value">${m.points[m.points.length-1].value} ${m.unit}</div>
+        </div>
+        <div class="trends-dropdown-option__badge trends-dropdown-option__badge--${statusKey}">${statusLabel}</div>
+      </div>`;
+  };
+
+  return `
+    <div class="trends-dropdown-panel trends-dropdown-panel--open">
+      <div class="trends-dropdown-group trends-dropdown-group--warn">
+        <div class="trends-dropdown-group__label">⚠ Needs attention</div>
+        ${flagged.map(k => opt(k)).join('')}
+      </div>
+      <div class="trends-dropdown-group">
+        <div class="trends-dropdown-group__label">Body composition</div>
+        ${bodyComp.map(k => opt(k)).join('')}
+      </div>
+      <div class="trends-dropdown-group">
+        <div class="trends-dropdown-group__label">Normal blood markers</div>
+        ${normal.map(k => opt(k)).join('')}
+      </div>
+    </div>`;
+}
+
+/* ----- 7.5.4 Profile screen ----- */
+function renderProfile() {
+  const p = DATA.patient;
+  const accents = ['#1D9E75', '#185FA5', '#6B4A9E', '#C9447A', '#D96A56', '#C57B1F', '#3A3A38'];
+
+  return `
+    <section class="screen ${state.currentScreen === 'profile' ? 'screen--active' : ''}" data-screen="profile">
+
+      <div class="top-bar">
+        <div><div class="top-bar__greeting">Profile</div></div>
+      </div>
+
+      <section class="section">
+        <div class="identity-card">
+          <div class="avatar avatar--lg">${p.initials}</div>
+          <div class="identity-info">
+            <div class="identity-info__name">${p.firstName} ${p.lastName}</div>
+            <div class="identity-info__meta">${p.age} · ${p.sex} · ${p.heightCm}cm · ${p.activity}</div>
+            <span class="plan-badge">${p.plan} plan</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Accent colour</div></div>
+        <div class="accent-picker">
+          ${accents.map((c, i) => `
+            <span class="accent-swatch ${i === 0 ? 'accent-swatch--active' : ''}" style="background: ${c}"></span>
+          `).join('')}
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Health &amp; goals</div></div>
+        <div class="profile-row" data-nav="progress">
+          <div class="profile-row__label">Goal &amp; progress</div>
+          <div class="profile-row__right"><span>Week ${p.programWeek}</span>›</div>
+        </div>
+        <div class="profile-row" data-nav="stub-photos">
+          <div class="profile-row__label">Progress photos</div>
+          <div class="profile-row__right">›</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Records</div></div>
+        <div class="profile-row" data-nav="stub-food">
+          <div class="profile-row__label">Food library</div>
+          <div class="profile-row__right">›</div>
+        </div>
+        <div class="profile-row" data-nav="stub-blood-history">
+          <div class="profile-row__label">Blood test history</div>
+          <div class="profile-row__right">›</div>
+        </div>
+        <div class="profile-row" data-nav="stub-inbody-history">
+          <div class="profile-row__label">InBody scan history</div>
+          <div class="profile-row__right">›</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Preferences</div></div>
+        <div class="profile-row" data-nav="stub-personal">
+          <div class="profile-row__label">Personal details</div>
+          <div class="profile-row__right">›</div>
+        </div>
+        <div class="profile-row" data-nav="stub-notifications">
+          <div class="profile-row__label">Notifications</div>
+          <div class="profile-row__right">›</div>
+        </div>
+        <div class="profile-row" data-nav="stub-devices">
+          <div class="profile-row__label">Connected devices</div>
+          <div class="profile-row__right">›</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Subscription &amp; billing</div></div>
+        <div class="profile-row" data-nav="billing">
+          <div class="profile-row__label">Plan &amp; billing</div>
+          <div class="profile-row__right"><span>${p.plan}</span>›</div>
+        </div>
+        <div class="profile-row" data-nav="plans">
+          <div class="profile-row__label">Upgrade plan</div>
+          <div class="profile-row__right">›</div>
+        </div>
+      </section>
+
+      <div class="booking-strip">
+        <div class="booking-strip__info">
+          <div class="booking-strip__label">Next blood draw</div>
+          <div class="booking-strip__value">${DATA.markers.nextDraw} · Al Bannay Clinic</div>
+        </div>
+        <a href="tel:22267222" class="top-strip__btn" style="text-decoration:none;color:#fff;">Book now</a>
+      </div>
+
+      <div class="signout-row">Sign out</div>
+    </section>`;
+}
+
+/* ----- 7.5.5 Billing sub-page (Premium + Core toggle) ----- */
+function renderBilling() {
+  const b = DATA.billing;
+  const u = b.coreUsage;
+  const isPremium = state.billingView === 'premium';
+
+  return `
+    <section class="screen ${state.currentScreen === 'billing' ? 'screen--active' : ''}" data-screen="billing">
+
+      <div class="back-bar">
+        <button class="back-bar__btn" data-nav="profile">←</button>
+        <div class="back-bar__title">Plan &amp; billing</div>
+        <!-- dev-only toggle for auditing Core view -->
+        <button class="dev-toggle" style="margin-left: auto;" data-billing-view-toggle>
+          View as ${isPremium ? 'Core' : 'Premium'}
+        </button>
+      </div>
+
+      <section class="section">
+        ${isPremium ? `
+          <div class="plan-card-billing">
+            <div class="plan-card-billing__head">
+              <div>
+                <div class="plan-card-billing__name">Premium</div>
+                <div class="plan-card-billing__renewal">Renews ${b.renewalDate}</div>
+              </div>
+              <div class="plan-card-billing__price">${b.monthlyPrice} KWD/mo</div>
+            </div>
+            <div class="feature-list">
+              <div class="feature-list__row"><span class="feature-list__label">AI nutritionist</span><span class="feature-list__value">Unlimited</span></div>
+              <div class="feature-list__row"><span class="feature-list__label">Blood test &amp; InBody parsing</span><span class="feature-list__value">Automated</span></div>
+              <div class="feature-list__row"><span class="feature-list__label">Trend history</span><span class="feature-list__value">Full history</span></div>
+              <div class="feature-list__row"><span class="feature-list__label">Weekly AI review</span><span class="feature-list__value">Every Sunday</span></div>
+              <div class="feature-list__row"><span class="feature-list__label">Blood draw reminders</span><span class="feature-list__value">Included</span></div>
+            </div>
+          </div>
+        ` : `
+          <div class="plan-card-billing" style="background: var(--color-bg-secondary);">
+            <div class="plan-card-billing__head">
+              <div>
+                <div class="plan-card-billing__name" style="color: var(--color-text-primary);">Core</div>
+                <div class="plan-card-billing__renewal" style="color: var(--color-text-secondary); opacity: 1;">Renews ${b.renewalDate}</div>
+              </div>
+              <div class="plan-card-billing__price" style="color: var(--color-text-primary);">9 KWD/mo</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px;">
+            <div class="usage-bar">
+              <div class="usage-bar__head">
+                <span class="usage-bar__label">AI messages today</span>
+                <span class="usage-bar__value">${u.aiMessagesUsed} of ${u.aiMessagesLimit}</span>
+              </div>
+              <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(u.aiMessagesUsed, u.aiMessagesLimit)}%"></div></div>
+              <div class="usage-bar__note">${u.aiMessagesLimit - u.aiMessagesUsed} remaining · resets at midnight</div>
+            </div>
+
+            <div class="usage-bar">
+              <div class="usage-bar__head">
+                <span class="usage-bar__label">Blood test uploads</span>
+                <span class="usage-bar__value">${u.bloodTestsUsed} of ${u.bloodTestsLimit}</span>
+              </div>
+              <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(u.bloodTestsUsed, u.bloodTestsLimit)}%"></div></div>
+            </div>
+
+            <div class="usage-bar usage-bar--warn">
+              <div class="usage-bar__head">
+                <span class="usage-bar__label">Trend history</span>
+                <span class="usage-bar__value">Last 30 days only</span>
+              </div>
+            </div>
+          </div>
+        `}
+      </section>
+
+      ${!isPremium ? `
+        <section class="section">
+          <div class="what-premium-adds">
+            <div class="what-premium-adds__title">What Premium adds</div>
+            <div class="what-premium-adds__item"><span class="what-premium-adds__bullet">+</span> Unlimited AI nutritionist messages</div>
+            <div class="what-premium-adds__item"><span class="what-premium-adds__bullet">+</span> Full trend history — no time limit</div>
+            <div class="what-premium-adds__item"><span class="what-premium-adds__bullet">+</span> Weekly AI nutrition review every Sunday</div>
+          </div>
+        </section>
+      ` : ''}
+
+      <section class="section">
+        <div class="annual-nudge">
+          <div class="annual-nudge__left">
+            <div class="annual-nudge__title">Switch to annual · save 38 KWD</div>
+            <div class="annual-nudge__sub">2 months free · effectively ${isPremium ? '14.25' : '6.75'} KWD/mo</div>
+          </div>
+          <button class="annual-nudge__btn">Switch</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Payment method</div></div>
+        <div class="payment-method">
+          <div class="payment-card-logo">${b.card.brand}</div>
+          <div class="payment-method__info">
+            <div class="payment-method__number">•••• •••• •••• ${b.card.last4}</div>
+            <div class="payment-method__expiry">Expires ${b.card.expiry}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Billing history</div></div>
+        ${b.history.map(h => `
+          <div class="invoice-row">
+            <div class="invoice-row__left">
+              <div class="invoice-row__date">${h.date}</div>
+              <div class="invoice-row__plan">${h.plan}</div>
+            </div>
+            <div class="invoice-row__right">
+              <span>${h.amount}</span>
+              <span class="invoice-row__download">Download</span>
+            </div>
+          </div>`).join('')}
+      </section>
+
+      <div class="signout-row" style="color: var(--color-danger);">
+        Cancel subscription
+        <div style="font-size: 11px; color: var(--color-text-secondary); font-weight: 400; margin-top: 4px;">
+          Access continues until ${b.renewalDate}
+        </div>
+      </div>
+    </section>`;
+}
+
+/* ----- 7.5.6 Plans Comparison sub-page ----- */
+function renderPlans() {
+  const cycle = state.billingCycle;
+  const plans = DATA.plans;
+
+  return `
+    <section class="screen ${state.currentScreen === 'plans' ? 'screen--active' : ''}" data-screen="plans">
+
+      <div class="back-bar">
+        <button class="back-bar__btn" data-nav="profile">←</button>
+        <div class="back-bar__title">Choose your plan</div>
+      </div>
+
+      <div class="billing-toggle">
+        <button class="billing-toggle__option ${cycle === 'monthly' ? 'billing-toggle__option--active' : ''}" data-cycle="monthly">Monthly</button>
+        <button class="billing-toggle__option ${cycle === 'annual' ? 'billing-toggle__option--active' : ''}" data-cycle="annual">Annual <sub>save 2mo</sub></button>
+      </div>
+
+      <section class="section" style="background: var(--color-bg-secondary); border-bottom: none;">
+        ${plans.map(p => {
+          const price = cycle === 'monthly' ? p.monthly : p.annual;
+          const annualSub = cycle === 'annual' ? `<div style="font-size: 10px; color: var(--color-text-secondary); margin-top: 2px;">${p.annualTotal} KWD/year</div>` : '';
+
+          const ctaLabel = p.current ? 'Current plan' : `Choose ${p.name}`;
+          const ctaClass = p.current ? 'plan-card__cta--current'
+                         : p.popular ? 'plan-card__cta--accent'
+                         : p.premiumPlus ? 'plan-card__cta--warn'
+                         : '';
+
+          const cardClass = p.popular ? 'plan-card--popular'
+                          : p.premiumPlus ? 'plan-card--premium-plus'
+                          : '';
+
+          return `
+            <div class="plan-card ${cardClass}">
+              ${p.popular ? '<div class="plan-card__badge">Most popular</div>' : ''}
+              <div class="plan-card__head">
+                <div class="plan-card__name">${p.name}</div>
+                <div class="plan-card__price-wrap">
+                  <div class="plan-card__price">${price} KWD<span class="plan-card__price-unit">/mo</span></div>
+                  ${annualSub}
+                </div>
+              </div>
+              <div class="plan-card__key-limit">${p.keyLimit}</div>
+              <div class="plan-card__differentiator">${p.differentiator}</div>
+              <button class="plan-card__cta ${ctaClass}">${ctaLabel}</button>
+            </div>`;
+        }).join('')}
+      </section>
+
+      <div class="plans-footer">
+        All plans include a 7-day free trial. Cancel anytime.<br>Prices in Kuwaiti Dinar.
+      </div>
+    </section>`;
+}
+
+/* ----- 7.5.7 Progress sub-page (the one fleshed-out sub-page) ----- */
+function renderProgress() {
+  const g = DATA.goal;
+  const bc = DATA.bodyComp;
+  return `
+    <section class="screen ${state.currentScreen === 'progress' ? 'screen--active' : ''}" data-screen="progress">
+
+      <div class="back-bar">
+        <button class="back-bar__btn" data-nav="profile">←</button>
+        <div class="back-bar__title">Goal &amp; progress</div>
+      </div>
+
+      <div class="progress-hero">
+        <div class="progress-hero__goal">${g.type}: ${g.from}% → ${g.to}%</div>
+        <div class="progress-hero__sub">Week ${g.week} of ${g.totalWeeks} · On track</div>
+        <div class="progress-hero__bar"><div class="progress-hero__bar-fill" style="width:${g.percent}%"></div></div>
+        <div class="progress-hero__meta">
+          <span>${g.from}%</span>
+          <span style="font-weight: 500; color: var(--color-text-primary);">${bc.bodyFat.value}% today</span>
+          <span>${g.to}%</span>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Before &amp; after</div></div>
+        <div class="progress-compare">
+          <div class="progress-compare__side">
+            <div class="progress-compare__thumb"><div class="thumb__label">Week 0</div></div>
+            <div class="progress-compare__label">Week 0</div>
+            <div class="progress-compare__stats">
+              <div>71.0 kg</div>
+              <div>29.5% body fat</div>
+              <div>23.8 kg muscle</div>
+            </div>
+          </div>
+          <div class="progress-compare__side">
+            <div class="progress-compare__thumb"><div class="thumb__label">Week 6</div></div>
+            <div class="progress-compare__label">Week 6 · Today</div>
+            <div class="progress-compare__stats">
+              <div>${bc.weight.value} kg</div>
+              <div>${bc.bodyFat.value}% body fat</div>
+              <div>${bc.muscle.value} kg muscle</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">Changes to date</div></div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: var(--space-divider) solid var(--color-border-tertiary);">
+            <span style="font-size: 13px;">Weight</span>
+            <span style="font-size: 13px; font-weight: 500; color: var(--color-accent);">↓ 2.6 kg</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: var(--space-divider) solid var(--color-border-tertiary);">
+            <span style="font-size: 13px;">Body fat</span>
+            <span style="font-size: 13px; font-weight: 500; color: var(--color-accent);">↓ 1.4%</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 12px 0;">
+            <span style="font-size: 13px;">Muscle mass</span>
+            <span style="font-size: 13px; font-weight: 500; color: var(--color-accent);">↑ 0.3 kg</span>
+          </div>
+        </div>
+      </section>
+    </section>`;
+}
+
+/* ----- 7.5.8 Stub sub-pages ----- */
+// TODO: the following screens are stubbed pending design sessions.
+// Each will be replaced with a real implementation once its design is specified.
+function renderStub(screenKey, title, reason) {
+  return `
+    <section class="screen ${state.currentScreen === screenKey ? 'screen--active' : ''}" data-screen="${screenKey}">
+      <div class="back-bar">
+        <button class="back-bar__btn" data-nav="profile">←</button>
+        <div class="back-bar__title">${title}</div>
+      </div>
+      <div class="stub-screen">
+        <div class="stub-screen__tag">Not yet designed</div>
+        <div class="stub-screen__title">${title}</div>
+        <div class="stub-screen__body">${reason}</div>
+      </div>
+    </section>`;
+}
+
+/* ----- 7.5.9 Bottom navigation ----- */
+function renderBottomNav() {
+  // Bottom nav only visible on the 4 top-level screens
+  const topLevel = ['home', 'nutrition', 'lab', 'profile'];
+  if (!topLevel.includes(state.currentScreen)) return '';
+
+  const items = [
+    { key: 'home', label: 'Home', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a1 1 0 0 1-1-1v-6h-4v6a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2z"/></svg>' },
+    { key: 'nutrition', label: 'Nutrition', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C9 6 6 9 6 13a6 6 0 0 0 12 0c0-4-3-7-6-11z"/><path d="M12 8v10"/></svg>' },
+    { key: 'lab', label: 'Lab', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6l-5 10a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-10V2"/><line x1="7" y1="2" x2="17" y2="2"/></svg>' },
+    { key: 'profile', label: 'Profile', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
+  ];
+
+  return items.map(item => `
+    <button class="bottom-nav__item ${state.currentScreen === item.key ? 'bottom-nav__item--active' : ''}" data-nav="${item.key}">
+      <span class="bottom-nav__icon">${item.icon}</span>
+      <span>${item.label}</span>
+    </button>`).join('');
+}
+
+/* ----- 7.6 Main render + routing ----- */
+function render() {
+  const content = document.getElementById('appContent');
+  const nav = document.getElementById('bottomNav');
+
+  const s = state.currentScreen;
+  let screenMarkup = '';
+
+  if (s === 'home') screenMarkup = renderHome();
+  else if (s === 'nutrition') screenMarkup = renderNutrition();
+  else if (s === 'lab') screenMarkup = renderLab();
+  else if (s === 'profile') screenMarkup = renderProfile();
+  else if (s === 'billing') screenMarkup = renderBilling();
+  else if (s === 'plans') screenMarkup = renderPlans();
+  else if (s === 'progress') screenMarkup = renderProgress();
+  else if (s === 'stub-photos') screenMarkup = renderStub('stub-photos', 'Progress photos', 'This screen is stubbed pending a dedicated design session. The final design will cover upload cadence, compare views, and privacy controls.');
+  else if (s === 'stub-food') screenMarkup = renderStub('stub-food', 'Food library', 'This screen is stubbed pending a dedicated design session. Open questions: saved meals vs. Kuwait food database, search, custom recipes.');
+  else if (s === 'stub-blood-history') screenMarkup = renderStub('stub-blood-history', 'Blood test history', 'This is also the upload entry point for blood tests. User can photograph a printed report or pick a digital PDF. After parsing, a mandatory confirmation screen shows extracted values in editable fields. Needs design for: upload flow, parsing progress, confirmation screen, history archive, and per-draw summary views.');
+  else if (s === 'stub-inbody-history') screenMarkup = renderStub('stub-inbody-history', 'InBody scan history', 'This is also the upload entry point for InBody scans (separate from blood tests). Same flow: camera or file picker, parsing, mandatory confirmation with editable fields. Needs design for: upload flow, scan timeline, and scan-to-scan comparison view.');
+  else if (s === 'stub-personal') screenMarkup = renderStub('stub-personal', 'Personal details', 'This screen is stubbed pending a dedicated design session. Needs design for editable profile fields and medical disclosures.');
+  else if (s === 'stub-notifications') screenMarkup = renderStub('stub-notifications', 'Notifications', 'This screen is stubbed pending a dedicated design session. Needs product decisions on notification categories and per-category toggles.');
+  else if (s === 'stub-devices') screenMarkup = renderStub('stub-devices', 'Connected devices', 'This screen is stubbed pending a dedicated design session. Needs decisions on supported integrations (Apple Health, Google Fit, Oura, Garmin, etc.).');
+
+  content.innerHTML = screenMarkup;
+  nav.innerHTML = renderBottomNav();
+  nav.style.display = renderBottomNav() ? 'flex' : 'none';
+
+  // Scroll to top on screen change
+  content.scrollTop = 0;
+}
+
+/* ----- 7.7 Event delegation ----- */
+// One listener on app root handles every interaction. Keeps the code audit-friendly
+// and means adding a new navigable element is just adding a data-attribute.
+document.getElementById('app').addEventListener('click', (e) => {
+  const target = e.target.closest('[data-nav], [data-subtab-switch], [data-labtab-switch], [data-trends-dropdown], [data-trend-select], [data-cycle], [data-water-add], [data-billing-view-toggle]');
+  if (!target) {
+    // Click outside of dropdown closes it
+    if (state.trendsDropdownOpen && !e.target.closest('.trends-dropdown-panel')) {
+      state.trendsDropdownOpen = false;
+      render();
+    }
+    return;
+  }
+
+  // Top-level / sub-page navigation
+  if (target.dataset.nav) {
+    state.currentScreen = target.dataset.nav;
+    if (target.dataset.subtab) state.nutritionTab = target.dataset.subtab;
+    state.trendsDropdownOpen = false;
+    render();
+    return;
+  }
+
+  // Nutrition sub-tab switch (chat / log)
+  if (target.dataset.subtabSwitch) {
+    state.nutritionTab = target.dataset.subtabSwitch;
+    render();
+    return;
+  }
+
+  // Lab sub-tab switch (blood / inbody / trends)
+  if (target.dataset.labtabSwitch) {
+    state.labTab = target.dataset.labtabSwitch;
+    state.trendsDropdownOpen = false;
+    render();
+    return;
+  }
+
+  // Trends dropdown open/close
+  if (target.dataset.trendsDropdown !== undefined) {
+    state.trendsDropdownOpen = !state.trendsDropdownOpen;
+    render();
+    return;
+  }
+
+  // Trends marker selection
+  if (target.dataset.trendSelect) {
+    state.trendMarker = target.dataset.trendSelect;
+    state.trendsDropdownOpen = false;
+    render();
+    return;
+  }
+
+  // Plans monthly/annual toggle
+  if (target.dataset.cycle) {
+    state.billingCycle = target.dataset.cycle;
+    render();
+    return;
+  }
+
+  // Water quick-add — local DOM update only (avoids re-render flicker of the bottle animation)
+  if (target.dataset.waterAdd) {
+    const add = parseInt(target.dataset.waterAdd, 10);
+    state.waterMl = Math.min(state.waterMl + add, DATA.targets.water + 500);
+    const mount = document.getElementById('waterBottleMount');
+    if (mount) mount.innerHTML = waterBottleSvg(state.waterMl, DATA.targets.water);
+    const val = document.getElementById('waterValue');
+    if (val) val.textContent = (state.waterMl / 1000).toFixed(1) + 'L';
+    const rem = document.getElementById('waterRemain');
+    if (rem) rem.textContent = Math.max(0, DATA.targets.water - state.waterMl) + 'ml';
+    return;
+  }
+
+  // Dev-only billing view toggle
+  if (target.dataset.billingViewToggle !== undefined) {
+    state.billingView = state.billingView === 'premium' ? 'core' : 'premium';
+    render();
+    return;
+  }
+});
+
+// Initial render
+render();
+</script>
+</body>
+</html>
