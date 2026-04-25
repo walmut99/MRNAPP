@@ -10,6 +10,7 @@ import Svg, {
 
 import { consumedToday, targets } from '../../data/sarah';
 import { colors, fontSize, fontWeight, radii, spacing } from '../../theme';
+import { formatNumber } from '../../utils/formatNumber';
 import Section from './Section';
 
 function WaterBottle({ currentMl, targetMl }: { currentMl: number; targetMl: number }) {
@@ -84,7 +85,7 @@ export default function ActivityTiles() {
           </View>
           <View>
             <Text style={styles.tileValue}>{(waterMl / 1000).toFixed(1)}L</Text>
-            <Text style={styles.tileSub}>{remaining}ml to goal</Text>
+            <Text style={styles.tileSub}>{formatNumber(remaining)}ml to goal</Text>
           </View>
           <View style={styles.waterButtons}>
             <Pressable style={styles.waterBtn} onPress={() => addWater(250)}>
@@ -102,11 +103,9 @@ export default function ActivityTiles() {
             <Walker />
           </View>
           <View>
-            <Text style={styles.tileValue}>
-              {consumedToday.steps.toLocaleString()}
-            </Text>
+            <Text style={styles.tileValue}>{formatNumber(consumedToday.steps)}</Text>
             <Text style={styles.tileSub}>
-              of {consumedToday.stepsGoal.toLocaleString()} goal
+              of {formatNumber(consumedToday.stepsGoal)} goal
             </Text>
           </View>
           <View style={styles.stepsProgress}>

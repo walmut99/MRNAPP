@@ -1,5 +1,5 @@
-import PlaceholderScreen from '../../src/components/PlaceholderScreen';
+import AINutritionistScreen from '../../src/screens/AINutritionistScreen';
 
 export default function NutritionScreen() {
-  return <PlaceholderScreen name="Nutrition" />;
+  return <AINutritionistScreen />;
 }

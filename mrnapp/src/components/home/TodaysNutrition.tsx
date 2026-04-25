@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { consumedToday, meals, targets } from '../../data/sarah';
 import { colors, fontSize, fontWeight, macroColors, spacing } from '../../theme';
+import { formatNumber } from '../../utils/formatNumber';
 import MacroArc from './MacroArc';
 import Section from './Section';
 
@@ -17,13 +18,13 @@ export default function TodaysNutrition() {
   return (
     <Section
       label="Today's nutrition"
-      count={`${c.calories} / ${t.calories} kcal`}>
+      count={`${formatNumber(c.calories)} / ${formatNumber(t.calories)} kcal`}>
       <View style={styles.row}>
         <MacroArc
           color={macroColors.calories}
           percent={pct(c.calories, t.calories)}
           label="Calories"
-          value={`${c.calories} / ${t.calories}`}
+          value={`${formatNumber(c.calories)} / ${formatNumber(t.calories)}`}
         />
         <MacroArc
           color={macroColors.protein}
@@ -49,7 +50,7 @@ export default function TodaysNutrition() {
         <View style={styles.mealInfo}>
           <Text style={styles.mealName}>Last meal · {lunch.name}</Text>
           <Text style={styles.mealMeta}>
-            {lunch.calories} kcal · {lunch.protein}g protein
+            {formatNumber(lunch.calories)} kcal · {lunch.protein}g protein
           </Text>
         </View>
         <Pressable>
