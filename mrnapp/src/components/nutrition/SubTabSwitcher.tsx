@@ -3,12 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fontSize, fontWeight, spacing } from '../../theme';
 
 type Props = {
-  tabs: readonly [string, string];
-  activeIndex: 0 | 1;
-  onChange: (index: 0 | 1) => void;
+  tabs: readonly string[];
+  activeIndex: number;
+  onChange: (index: number) => void;
+  equalWidth?: boolean;
 };
 
-export default function SubTabSwitcher({ tabs, activeIndex, onChange }: Props) {
+export default function SubTabSwitcher({ tabs, activeIndex, onChange, equalWidth }: Props) {
   return (
     <View style={styles.row}>
       {tabs.map((label, i) => {
@@ -16,8 +17,8 @@ export default function SubTabSwitcher({ tabs, activeIndex, onChange }: Props) {
         return (
           <Pressable
             key={label}
-            onPress={() => onChange(i as 0 | 1)}
-            style={[styles.tab, active && styles.tabActive]}>
+            onPress={() => onChange(i)}
+            style={[styles.tab, equalWidth && styles.tabEqual, active && styles.tabActive]}>
             <Text style={[styles.label, active && styles.labelActive]}>{label}</Text>
           </Pressable>
         );
@@ -37,6 +38,11 @@ const styles = StyleSheet.create({
     marginRight: 24,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+  },
+  tabEqual: {
+    flex: 1,
+    marginRight: 0,
+    alignItems: 'center',
   },
   tabActive: {
     borderBottomColor: colors.accent,

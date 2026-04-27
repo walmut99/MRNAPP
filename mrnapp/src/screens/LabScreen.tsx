@@ -4,23 +4,29 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import SubTabSwitcher from '../components/nutrition/SubTabSwitcher';
 import { colors, fontWeight, spacing } from '../theme';
-import ChatTab from './nutrition/ChatTab';
-import TodaysLogTab from './nutrition/TodaysLogTab';
+import BloodMarkersTab from './lab/BloodMarkersTab';
+import InBodyTab from './lab/InBodyTab';
 
-const TABS = ['Chat', "Today's log"] as const;
+const TABS = ['Blood markers', 'InBody'] as const;
 
-export default function AINutritionistScreen() {
+export default function LabScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>AI Nutritionist</Text>
+        <Text style={styles.title}>Health data</Text>
       </View>
-      <SubTabSwitcher tabs={TABS} activeIndex={activeIndex} onChange={setActiveIndex} />
+      <SubTabSwitcher
+        tabs={TABS}
+        activeIndex={activeIndex}
+        onChange={setActiveIndex}
+        equalWidth
+      />
       <View style={styles.divider} />
       <View style={styles.body}>
-        {activeIndex === 0 ? <ChatTab /> : <TodaysLogTab />}
+        {activeIndex === 0 && <BloodMarkersTab />}
+        {activeIndex === 1 && <InBodyTab />}
       </View>
     </SafeAreaView>
   );

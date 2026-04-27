@@ -1,5 +1,5 @@
-import PlaceholderScreen from '../../src/components/PlaceholderScreen';
+import LabScreen from '../../src/screens/LabScreen';
 
-export default function LabScreen() {
-  return <PlaceholderScreen name="Lab" />;
+export default function Lab() {
+  return <LabScreen />;
 }
