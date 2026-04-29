@@ -1,10 +1,17 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { bodyComp } from '../../data/sarah';
 import { colors, fontSize, fontWeight, lineHeight, spacing } from '../../theme';
 import Section from './Section';
 
-type Stat = { label: string; value: number; unit: string; change: number };
+type Stat = {
+  label: string;
+  value: number;
+  unit: string;
+  change: number;
+  routeName?: string;
+};
 
 function Trend({ change, unit }: { change: number; unit: string }) {
   const arrow = change > 0 ? '↑' : '↓';
@@ -15,32 +22,56 @@ function Trend({ change, unit }: { change: number; unit: string }) {
   );
 }
 
-function StatCell({ stat, withDivider }: { stat: Stat; withDivider: boolean }) {
+function StatCellInner({ stat }: { stat: Stat }) {
   return (
-    <View style={[styles.cell, withDivider && styles.cellDivider]}>
+    <>
       <Text style={styles.label}>{stat.label}</Text>
       <Text style={styles.value}>
         {stat.value}
         <Text style={styles.valueUnit}>{stat.unit}</Text>
       </Text>
       <Trend change={stat.change} unit={stat.unit} />
-    </View>
+    </>
   );
 }
 
 export default function BodyComposition() {
+  const router = useRouter();
+
   const stats: Stat[] = [
-    { label: 'Weight',   value: bodyComp.weight.value,  unit: bodyComp.weight.unit,  change: bodyComp.weight.change },
-    { label: 'Body fat', value: bodyComp.bodyFat.value, unit: bodyComp.bodyFat.unit, change: bodyComp.bodyFat.change },
-    { label: 'Muscle',   value: bodyComp.muscle.value,  unit: bodyComp.muscle.unit,  change: bodyComp.muscle.change },
+    { label: 'Weight',   value: bodyComp.weight.value,  unit: bodyComp.weight.unit,  change: bodyComp.weight.change,  routeName: 'weight' },
+    { label: 'Body Fat', value: bodyComp.bodyFat.value, unit: bodyComp.bodyFat.unit, change: bodyComp.bodyFat.change, routeName: 'bodyFat' },
+    { label: 'Muscle',   value: bodyComp.muscle.value,  unit: bodyComp.muscle.unit,  change: bodyComp.muscle.change,  routeName: 'muscleMass' },
   ];
 
   return (
-    <Section label="Body composition">
+    <Section label="Body Composition">
       <View style={styles.row}>
-        {stats.map((s, i) => (
-          <StatCell key={s.label} stat={s} withDivider={i > 0} />
-        ))}
+        {stats.map((s, i) => {
+          const onPress = s.routeName
+            ? () => router.push({ pathname: '/marker/[name]', params: { name: s.routeName as string } })
+            : undefined;
+
+          if (onPress) {
+            return (
+              <Pressable
+                key={s.label}
+                onPress={onPress}
+                style={({ pressed }) => [
+                  styles.cell,
+                  i > 0 && styles.cellDivider,
+                  { opacity: pressed ? 0.6 : 1 },
+                ]}>
+                <StatCellInner stat={s} />
+              </Pressable>
+            );
+          }
+          return (
+            <View key={s.label} style={[styles.cell, i > 0 && styles.cellDivider]}>
+              <StatCellInner stat={s} />
+            </View>
+          );
+        })}
       </View>
     </Section>
   );

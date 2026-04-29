@@ -2,12 +2,12 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, fontSize, fontWeight, letterSpacing } from '../../theme';
 
-export type MarkerStatus = 'high' | 'low' | 'borderline' | 'normal';
+export type MarkerStatus = 'high' | 'low' | 'borderline' | 'normal' | 'warn';
 
 type Props = {
   value: string;
   unit: string;
-  range: string;
+  range?: string;
   status: MarkerStatus;
   barPct: number;
 };
@@ -25,6 +25,12 @@ const STATUS_TOKENS: Record<
     pillText: '⚠ BORDERLINE',
   },
   normal: { bg: colors.accentLight, fg: colors.accentDark, label: 'NORMAL', pillText: '✓ NORMAL' },
+  warn: {
+    bg: colors.warnLight,
+    fg: colors.warn,
+    label: 'ABOVE TARGET',
+    pillText: '↑ ABOVE TARGET',
+  },
 };
 
 export default function MarkerSnapshot({ value, unit, range, status, barPct }: Props) {
@@ -39,7 +45,7 @@ export default function MarkerSnapshot({ value, unit, range, status, barPct }: P
             {value}
             <Text style={styles.unit}> {unit}</Text>
           </Text>
-          <Text style={styles.range}>RANGE {range}</Text>
+          {range ? <Text style={styles.range}>RANGE {range}</Text> : null}
         </View>
         <View style={[styles.pill, { backgroundColor: tokens.bg }]}>
           <Text style={[styles.pillText, { color: tokens.fg }]}>{tokens.pillText}</Text>

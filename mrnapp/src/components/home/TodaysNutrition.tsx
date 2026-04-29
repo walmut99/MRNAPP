@@ -17,7 +17,7 @@ export default function TodaysNutrition() {
 
   return (
     <Section
-      label="Today's nutrition"
+      label="Today's Nutrition"
       count={`${formatNumber(c.calories)} / ${formatNumber(t.calories)} kcal`}>
       <View style={styles.row}>
         <MacroArc

@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import { colors } from '../../theme';
 
@@ -8,17 +8,25 @@ export type TrendPoint = { date: string; value: number };
 type Props = {
   points: TrendPoint[];
   color: string;
+  unit?: string;
 };
 
 const VB_W = 320;
 const VB_H = 150;
 const PAD_X = 28;
-const VAL_LABEL_Y = 14;
 const CHART_TOP = 30;
 const CHART_BOTTOM = 110;
 const DATE_LABEL_Y = 132;
+const LABEL_OFFSET = 12;
+const FLIP_THRESHOLD = 16;
 
-export default function MarkerTrendChart({ points, color }: Props) {
+function formatLabel(value: number, unit?: string): string {
+  if (!unit) return `${value}`;
+  if (unit === '%') return `${value}%`;
+  return `${value} ${unit}`;
+}
+
+export default function MarkerTrendChart({ points, color, unit }: Props) {
   if (points.length === 0) return null;
 
   const values = points.map((p) => p.value);
@@ -58,18 +66,7 @@ export default function MarkerTrendChart({ points, color }: Props) {
           strokeWidth={1.5}
           strokeLinejoin="round"
         />
-        {points.map((p, i) => (
-          <SvgText
-            key={`${p.date}-val`}
-            x={xAt(i)}
-            y={VAL_LABEL_Y}
-            fontSize={10}
-            fontWeight="500"
-            fill={colors.textPrimary}
-            textAnchor="middle">
-            {p.value}
-          </SvgText>
-        ))}
+
         {points.map((p, i) => (
           <Circle key={`${p.date}-outer`} cx={xAt(i)} cy={yAt(p.value)} r={4} fill={color} />
         ))}
@@ -82,6 +79,53 @@ export default function MarkerTrendChart({ points, color }: Props) {
             fill={colors.backgroundPrimary}
           />
         ))}
+
+        {points.map((p, i) => {
+          const text = formatLabel(p.value, unit);
+          const longLabel = text.length > 8;
+          const charWidth = longLabel ? 5 : 5.5;
+          const labelWidth = text.length * charWidth;
+          const px = xAt(i);
+          const py = yAt(p.value);
+          const flipBelow = py < FLIP_THRESHOLD;
+          const labelY = flipBelow ? py + LABEL_OFFSET + 4 : py - LABEL_OFFSET;
+
+          return (
+            <Rect
+              key={`${p.date}-halo`}
+              x={px - labelWidth / 2 - 4}
+              y={labelY - 9}
+              width={labelWidth + 8}
+              height={12}
+              rx={3}
+              fill={colors.backgroundPrimary}
+            />
+          );
+        })}
+
+        {points.map((p, i) => {
+          const text = formatLabel(p.value, unit);
+          const longLabel = text.length > 8;
+          const fontSize = longLabel ? 9 : 10;
+          const px = xAt(i);
+          const py = yAt(p.value);
+          const flipBelow = py < FLIP_THRESHOLD;
+          const labelY = flipBelow ? py + LABEL_OFFSET + 4 : py - LABEL_OFFSET;
+
+          return (
+            <SvgText
+              key={`${p.date}-val`}
+              x={px}
+              y={labelY}
+              fontSize={fontSize}
+              fontWeight="500"
+              fill={colors.textPrimary}
+              textAnchor="middle">
+              {text}
+            </SvgText>
+          );
+        })}
+
         {points.map((p, i) => (
           <SvgText
             key={`${p.date}-date`}

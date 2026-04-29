@@ -141,6 +141,79 @@ export const markers = {
   ],
 };
 
+export const inbody = {
+  lastScanDate: 'Mar 5, 2026',
+  inbodyScore: 78,
+
+  bodyComposition: [
+    { id: 'weight',      label: 'Weight',       value: 68.4, unit: 'kg',    barPct: 62, barColor: 'accent', tappable: true  },
+    { id: 'bodyFat',     label: 'Body Fat %',   value: 28.1, unit: '%',     barPct: 70, barColor: 'warn',   tappable: true  },
+    { id: 'muscleMass',  label: 'Muscle Mass',  value: 24.1, unit: 'kg',    barPct: 58, barColor: 'accent', tappable: true  },
+    { id: 'fatMass',     label: 'Fat Mass',     value: 19.2, unit: 'kg',    barPct: 68, barColor: 'warn',   tappable: false },
+    { id: 'bmr',         label: 'BMR',          value: 1420, unit: 'kcal',  barPct: 54, barColor: 'accent', tappable: false },
+    { id: 'visceralFat', label: 'Visceral Fat', value: 6,    unit: 'level', barPct: 35, barColor: 'accent', tappable: false },
+  ],
+
+  segments: {
+    leftArm:  { kg: 2.4,  status: 'normal', delta: 0.1  },
+    rightArm: { kg: 2.5,  status: 'normal', delta: 0.1  },
+    trunk:    { kg: 19.8, status: 'normal', delta: 0.2  },
+    leftLeg:  { kg: 7.6,  status: 'lower',  delta: -0.1 },
+    rightLeg: { kg: 7.8,  status: 'normal', delta: 0.1  },
+  },
+
+  hasPreviousScan: true,
+};
+
+export const bodyCompMetrics = {
+  weight: {
+    name: 'Weight',
+    value: 68.4,
+    unit: 'kg',
+    barPct: 62,
+    status: 'normal',
+    trend: [
+      { date: 'Mar 5',  value: 71.0 },
+      { date: 'Apr 2',  value: 69.6 },
+      { date: 'Apr 16', value: 68.4 },
+    ],
+    nutrition_note:
+      "Down 2.6kg over six weeks — that's a healthy pace at roughly 0.4kg per week. Your protein intake is the lever keeping muscle while the scale moves.",
+    isGoalMetric: false,
+  },
+  bodyFat: {
+    name: 'Body Fat',
+    value: 28.1,
+    unit: '%',
+    barPct: 70,
+    status: 'warn',
+    trend: [
+      { date: 'Mar 5',  value: 29.5 },
+      { date: 'Apr 2',  value: 28.8 },
+      { date: 'Apr 16', value: 28.1 },
+    ],
+    nutrition_note:
+      "Down 1.4% over six weeks — exactly the pace your goal needs. Protein adherence at lunch and dinner is the lever here.",
+    isGoalMetric: true,
+    goalProgress: { from: 29.5, to: 23.0, current: 28.1, pct: 22 },
+  },
+  muscleMass: {
+    name: 'Muscle Mass',
+    value: 24.1,
+    unit: 'kg',
+    barPct: 58,
+    status: 'normal',
+    trend: [
+      { date: 'Mar 5',  value: 23.8  },
+      { date: 'Apr 2',  value: 23.95 },
+      { date: 'Apr 16', value: 24.1  },
+    ],
+    nutrition_note:
+      "Up 0.3kg in six weeks while losing fat — exactly what you want during a recomposition phase. Keep protein at 110g daily.",
+    isGoalMetric: false,
+  },
+};
+
 export default {
   patient,
   goal,
@@ -151,4 +224,6 @@ export default {
   proactiveMessage,
   flaggedMarkers,
   markers,
+  inbody,
+  bodyCompMetrics,
 };

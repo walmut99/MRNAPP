@@ -5,10 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Section from '../components/home/Section';
 import AINoteBlock from '../components/marker/AINoteBlock';
+import GoalProgressBlock from '../components/marker/GoalProgressBlock';
 import MarkerSnapshot, { MarkerStatus } from '../components/marker/MarkerSnapshot';
 import MarkerTrendChart, { TrendPoint } from '../components/marker/MarkerTrendChart';
 import TreatmentBlock, { Treatment } from '../components/marker/TreatmentBlock';
-import { markers } from '../data/sarah';
+import { bodyCompMetrics, markers } from '../data/sarah';
 import { colors, fontSize, fontWeight, spacing } from '../theme';
 
 type FlaggedSeed = {
@@ -32,17 +33,33 @@ type NormalSeed = {
   trend: TrendPoint[];
 };
 
+type GoalProgress = { from: number; to: number; current: number; pct: number };
+
+type BodyCompSeed = {
+  name: string;
+  value: number;
+  unit: string;
+  barPct: number;
+  status: MarkerStatus;
+  trend: TrendPoint[];
+  nutrition_note: string;
+  isGoalMetric: boolean;
+  goalProgress?: GoalProgress;
+};
+
 type Resolved = {
   name: string;
   valueText: string;
   unit: string;
-  range: string;
+  range?: string;
   status: MarkerStatus;
   barPct: number;
   trend: TrendPoint[];
-  isFlagged: boolean;
+  showAINote: boolean;
+  showTreatment: boolean;
   nutritionNote?: string;
   treatments: Treatment[];
+  goalProgress?: GoalProgress;
 };
 
 const STATUS_COLOR: Record<MarkerStatus, string> = {
@@ -50,6 +67,7 @@ const STATUS_COLOR: Record<MarkerStatus, string> = {
   low: colors.warn,
   borderline: colors.borderline,
   normal: colors.accent,
+  warn: colors.warn,
 };
 
 function splitValueAndUnit(raw: string): { value: string; unit: string } {
@@ -70,7 +88,8 @@ function resolve(name: string): Resolved | null {
       status: flagged.status as MarkerStatus,
       barPct: flagged.barPct,
       trend: flagged.trend,
-      isFlagged: true,
+      showAINote: !!flagged.nutrition_note,
+      showTreatment: true,
       nutritionNote: flagged.nutrition_note,
       treatments: flagged.treatments ?? [],
     };
@@ -87,15 +106,34 @@ function resolve(name: string): Resolved | null {
       status: 'normal',
       barPct: normal.barPct,
       trend: normal.trend,
-      isFlagged: false,
+      showAINote: false,
+      showTreatment: false,
       treatments: [],
+    };
+  }
+
+  const bodyCompMap = bodyCompMetrics as Record<string, BodyCompSeed>;
+  const bc = bodyCompMap[name];
+  if (bc) {
+    return {
+      name: bc.name,
+      valueText: String(bc.value),
+      unit: bc.unit,
+      status: bc.status,
+      barPct: bc.barPct,
+      trend: bc.trend,
+      showAINote: !!bc.nutrition_note,
+      showTreatment: false,
+      nutritionNote: bc.nutrition_note,
+      treatments: [],
+      goalProgress: bc.isGoalMetric ? bc.goalProgress : undefined,
     };
   }
 
   return null;
 }
 
-function changeIndicator(trend: TrendPoint[], status: MarkerStatus) {
+function changeIndicator(trend: TrendPoint[], status: MarkerStatus, unit: string) {
   if (trend.length < 2) return null;
   const first = trend[0];
   const last = trend[trend.length - 1];
@@ -105,18 +143,19 @@ function changeIndicator(trend: TrendPoint[], status: MarkerStatus) {
   const rounded = Math.round(raw * 100) / 100;
   const arrow = rounded > 0 ? '↑' : '↓';
   const num = rounded > 0 ? `+${rounded}` : `${rounded}`;
+  const unitSuffix = unit ? ` ${unit}` : '';
 
-  // "Good" direction: HIGH or BORDERLINE moving down, LOW moving up, NORMAL stable-or-improving.
+  // "Good" direction: HIGH/BORDERLINE/WARN moving down, LOW moving up, NORMAL stable-or-improving.
   const goingDown = rounded < 0;
   const goodDirection =
-    status === 'high' || status === 'borderline'
+    status === 'high' || status === 'borderline' || status === 'warn'
       ? goingDown
       : status === 'low'
         ? !goingDown
         : true;
 
   return {
-    text: `${arrow} ${num} since ${first.date}`,
+    text: `${arrow} ${num}${unitSuffix} since ${first.date}`,
     color: goodDirection ? colors.accent : colors.textSecondary,
   };
 }
@@ -140,7 +179,7 @@ export default function MarkerDetailScreen({ name }: Props) {
     );
   }
 
-  const change = changeIndicator(marker.trend, marker.status);
+  const change = changeIndicator(marker.trend, marker.status, marker.unit);
   const lineColor = STATUS_COLOR[marker.status];
 
   return (
@@ -159,6 +198,18 @@ export default function MarkerDetailScreen({ name }: Props) {
           barPct={marker.barPct}
         />
 
+        {marker.goalProgress ? (
+          <Section label="Goal Progress">
+            <GoalProgressBlock
+              from={marker.goalProgress.from}
+              to={marker.goalProgress.to}
+              current={marker.goalProgress.current}
+              pct={marker.goalProgress.pct}
+              unit={marker.unit}
+            />
+          </Section>
+        ) : null}
+
         <Section
           label="Trend"
           right={
@@ -166,16 +217,16 @@ export default function MarkerDetailScreen({ name }: Props) {
               <Text style={[styles.changeIndicator, { color: change.color }]}>{change.text}</Text>
             ) : undefined
           }>
-          <MarkerTrendChart points={marker.trend} color={lineColor} />
+          <MarkerTrendChart points={marker.trend} color={lineColor} unit={marker.unit} />
         </Section>
 
-        {marker.isFlagged && marker.nutritionNote ? (
-          <Section label="From your AI nutritionist">
+        {marker.showAINote && marker.nutritionNote ? (
+          <Section label="From Your AI Nutritionist">
             <AINoteBlock note={marker.nutritionNote} />
           </Section>
         ) : null}
 
-        {marker.isFlagged ? (
+        {marker.showTreatment ? (
           <Section
             label="Treatment"
             count={
@@ -192,7 +243,7 @@ export default function MarkerDetailScreen({ name }: Props) {
         <Pressable
           onPress={() => router.push('/nutrition')}
           style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}>
-          <Text style={styles.ctaText}>Discuss with AI</Text>
+          <Text style={styles.ctaText}>Discuss with AI Nutritionist</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -270,7 +321,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   ctaText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: fontWeight.medium as '500',
     color: colors.accent,
   },

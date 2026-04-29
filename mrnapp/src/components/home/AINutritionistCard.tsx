@@ -25,7 +25,7 @@ function Chip({ label, accent }: { label: string; accent?: boolean }) {
 
 export default function AINutritionistCard() {
   return (
-    <Section label="AI nutritionist">
+    <Section label="AI Nutritionist">
       <View style={styles.card}>
         <AiAvatar />
         <View style={styles.body}>

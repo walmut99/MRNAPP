@@ -7,7 +7,7 @@ import { colors, fontWeight, spacing } from '../theme';
 import BloodMarkersTab from './lab/BloodMarkersTab';
 import InBodyTab from './lab/InBodyTab';
 
-const TABS = ['Blood markers', 'InBody'] as const;
+const TABS = ['Blood Markers', 'InBody'] as const;
 
 export default function LabScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -15,7 +15,7 @@ export default function LabScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Health data</Text>
+        <Text style={styles.title}>Health Data</Text>
       </View>
       <SubTabSwitcher
         tabs={TABS}

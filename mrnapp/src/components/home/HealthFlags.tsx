@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { flaggedMarkers } from '../../data/sarah';
@@ -13,9 +14,11 @@ const STATUS_STYLES: Record<Status, { bg: string; fg: string; arrow: string }> =
 };
 
 export default function HealthFlags() {
+  const router = useRouter();
+
   return (
     <Section
-      label="Health flags"
+      label="Health Flags"
       count={`${flaggedMarkers.length} flagged`}>
       {flaggedMarkers.map((m, idx) => {
         const s = STATUS_STYLES[m.status as Status];
@@ -23,10 +26,14 @@ export default function HealthFlags() {
         return (
           <Pressable
             key={m.name}
-            style={[
+            onPress={() =>
+              router.push({ pathname: '/marker/[name]', params: { name: m.name } })
+            }
+            style={({ pressed }) => [
               styles.row,
               { backgroundColor: s.bg },
               !isLast && { marginBottom: spacing.flagRowGap },
+              { opacity: pressed ? 0.6 : 1 },
             ]}>
             <View style={styles.left}>
               <Text style={[styles.arrow, { color: s.fg }]}>{s.arrow}</Text>

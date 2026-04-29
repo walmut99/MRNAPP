@@ -7,7 +7,7 @@ import { colors, fontWeight, spacing } from '../theme';
 import ChatTab from './nutrition/ChatTab';
 import TodaysLogTab from './nutrition/TodaysLogTab';
 
-const TABS = ['Chat', "Today's log"] as const;
+const TABS = ['Chat', "Today's Log"] as const;
 
 export default function AINutritionistScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -17,7 +17,12 @@ export default function AINutritionistScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>AI Nutritionist</Text>
       </View>
-      <SubTabSwitcher tabs={TABS} activeIndex={activeIndex} onChange={setActiveIndex} />
+      <SubTabSwitcher
+        tabs={TABS}
+        activeIndex={activeIndex}
+        onChange={setActiveIndex}
+        equalWidth
+      />
       <View style={styles.divider} />
       <View style={styles.body}>
         {activeIndex === 0 ? <ChatTab /> : <TodaysLogTab />}

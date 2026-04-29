@@ -68,13 +68,13 @@ export default function BloodMarkersTab() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}>
       <TopStrip
-        label="Next blood draw"
+        label="Next Blood Draw"
         value={markers.nextDrawDate}
         ctaLabel="Book now"
         onPress={onBookPress}
       />
 
-      <Section label="Needs attention" count={`${flagged.length} flagged`}>
+      <Section label="Needs Attention" count={`${flagged.length} flagged`}>
         <View style={styles.flagGrid}>
           {flagCards.map((m) => (
             <FlagCard
@@ -104,7 +104,7 @@ export default function BloodMarkersTab() {
         </View>
       </Section>
 
-      <Section label="All normal" count={`${normal.length} markers`}>
+      <Section label="All Normal" count={`${normal.length} markers`}>
         {grouped.map((group, gi) => (
           <View key={group.category} style={gi > 0 && styles.categoryGap}>
             <Text style={styles.categoryLabel}>{group.category}</Text>

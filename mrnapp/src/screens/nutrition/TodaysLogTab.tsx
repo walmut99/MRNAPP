@@ -40,7 +40,7 @@ export default function TodaysLogTab() {
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}>
-      <Section label="Consumed today">
+      <Section label="Consumed Today">
         <View style={styles.macros}>
           {MACROS.map((m) => (
             <MacroProgressBar
@@ -68,7 +68,7 @@ export default function TodaysLogTab() {
         ))}
       </Section>
 
-      <Section label="Still needed">
+      <Section label="Still Needed">
         <View style={styles.stillRow}>
           {STILL_NEEDED.map((s, i) => (
             <View
@@ -81,7 +81,7 @@ export default function TodaysLogTab() {
         </View>
       </Section>
 
-      <Section label="Suggestions for you">
+      <Section label="Suggestions For You">
         <View style={styles.suggestions}>
           <SuggestionCard
             dish="Grilled beef kofta with lentils"
