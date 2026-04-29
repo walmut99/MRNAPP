@@ -8,7 +8,7 @@ export const patient = {
   age: 31,
   sex: 'F',
   heightCm: 165,
-  activity: 'Lightly active',
+  activity: 'Lightly Active',
   plan: 'Premium',
   programWeek: 6,
   programTotalWeeks: 16,
