@@ -8,7 +8,7 @@ import Svg, {
   Rect,
 } from 'react-native-svg';
 
-import { consumedToday, targets } from '../../data/sarah';
+import { useDailyTargets, useTodaysIntake } from '../../hooks';
 import { colors, fontSize, fontWeight, radii, spacing } from '../../theme';
 import { formatNumber } from '../../utils/formatNumber';
 import Section from './Section';
@@ -70,10 +70,18 @@ function ProgressBar({ percent }: { percent: number }) {
 }
 
 export default function ActivityTiles() {
-  const [waterMl, setWaterMl] = useState(consumedToday.water);
+  const { data: intake } = useTodaysIntake();
+  const { data: targets } = useDailyTargets();
+
+  const [waterMl, setWaterMl] = useState(intake?.water ?? 0);
   const addWater = (ml: number) => setWaterMl((prev) => prev + ml);
-  const stepsPct = (consumedToday.steps / consumedToday.stepsGoal) * 100;
-  const remaining = Math.max(0, targets.water - waterMl);
+
+  const steps = intake?.steps ?? 0;
+  const stepsGoal = intake?.stepsGoal ?? 0;
+  const stepsPct = stepsGoal > 0 ? (steps / stepsGoal) * 100 : 0;
+
+  const waterTarget = targets?.water ?? 0;
+  const remaining = Math.max(0, waterTarget - waterMl);
 
   return (
     <Section label="Activity">
@@ -81,7 +89,7 @@ export default function ActivityTiles() {
         <View style={styles.tile}>
           <Text style={styles.tileLabel}>Water</Text>
           <View style={styles.tileMain}>
-            <WaterBottle currentMl={waterMl} targetMl={targets.water} />
+            <WaterBottle currentMl={waterMl} targetMl={waterTarget} />
           </View>
           <View>
             <Text style={styles.tileValue}>{(waterMl / 1000).toFixed(1)}L</Text>
@@ -103,10 +111,8 @@ export default function ActivityTiles() {
             <Walker />
           </View>
           <View>
-            <Text style={styles.tileValue}>{formatNumber(consumedToday.steps)}</Text>
-            <Text style={styles.tileSub}>
-              of {formatNumber(consumedToday.stepsGoal)} goal
-            </Text>
+            <Text style={styles.tileValue}>{formatNumber(steps)}</Text>
+            <Text style={styles.tileSub}>of {formatNumber(stepsGoal)} goal</Text>
           </View>
           <View style={styles.stepsProgress}>
             <ProgressBar percent={stepsPct} />

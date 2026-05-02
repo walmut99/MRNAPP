@@ -11,7 +11,7 @@ import InvoiceRow from '../components/billing/InvoiceRow';
 import PaymentMethodRow from '../components/billing/PaymentMethodRow';
 import UsageBar from '../components/billing/UsageBar';
 import WhatPremiumAddsCard from '../components/billing/WhatPremiumAddsCard';
-import { billing } from '../data/sarah';
+import { useBilling } from '../hooks';
 import { colors, fontWeight, letterSpacing, spacing } from '../theme';
 
 type BillingView = 'premium' | 'essentials';
@@ -26,15 +26,26 @@ const PREMIUM_FEATURES: PlanFeature[] = [
 
 export default function BillingScreen() {
   const router = useRouter();
+  const { data: billing } = useBilling();
   const [view, setView] = useState<BillingView>('premium');
 
   const isPremium = view === 'premium';
-  const usage = billing.essentialsUsage;
+  const usage = billing?.essentialsUsage ?? {
+    aiMessagesUsed: 0,
+    aiMessagesLimit: 0,
+    bloodTestsUsed: 0,
+    bloodTestsLimit: 0,
+    inbodyScansUsed: 0,
+    inbodyScansLimit: 0,
+  };
 
-  const monthlyPrice = isPremium ? billing.monthlyPrice : 9;
-  const annualTotal = isPremium ? billing.annualPrice : 90;
-  const annualEffective = isPremium ? billing.annualEffectiveMonthly : 7.5;
+  const monthlyPrice = isPremium ? billing?.monthlyPrice ?? 0 : 9;
+  const annualTotal = isPremium ? billing?.annualPrice ?? 0 : 90;
+  const annualEffective = isPremium ? billing?.annualEffectiveMonthly ?? 0 : 7.5;
   const saveAmount = monthlyPrice * 12 - annualTotal;
+  const renewalDate = billing?.renewalDate ?? '';
+  const card = billing?.card;
+  const history = billing?.history ?? [];
 
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>
@@ -65,8 +76,8 @@ export default function BillingScreen() {
           <CurrentPlanCard
             variant="premium"
             planName="Premium"
-            priceText={`${billing.monthlyPrice} KWD/mo`}
-            renewalDate={billing.renewalDate}
+            priceText={`${monthlyPrice} KWD/mo`}
+            renewalDate={renewalDate}
             features={PREMIUM_FEATURES}
           />
         ) : (
@@ -75,7 +86,7 @@ export default function BillingScreen() {
               variant="essentials"
               planName="Essentials"
               priceText="9 KWD/mo"
-              renewalDate={billing.renewalDate}
+              renewalDate={renewalDate}
               features={[]}
             />
             <View style={styles.usageBlock}>
@@ -113,23 +124,25 @@ export default function BillingScreen() {
           onPress={() => console.log('Switch to annual pressed')}
         />
 
-        <Section label="Payment Method">
-          <PaymentMethodRow
-            brand={billing.card.brand}
-            last4={billing.card.last4}
-            expiry={billing.card.expiry}
-          />
-        </Section>
+        {card ? (
+          <Section label="Payment Method">
+            <PaymentMethodRow
+              brand={card.brand}
+              last4={card.last4}
+              expiry={card.expiry}
+            />
+          </Section>
+        ) : null}
 
         <Section label="Billing History">
-          {billing.history.map((inv, i) => (
+          {history.map((inv, i) => (
             <InvoiceRow
               key={inv.date}
               date={inv.date}
               plan={inv.plan}
               amount={inv.amount}
               onDownload={() => console.log('Download invoice', inv.date)}
-              last={i === billing.history.length - 1}
+              last={i === history.length - 1}
             />
           ))}
         </Section>
@@ -138,7 +151,7 @@ export default function BillingScreen() {
           onPress={() => console.log('Cancel subscription pressed')}
           style={({ pressed }) => [styles.cancel, pressed && { opacity: 0.6 }]}>
           <Text style={styles.cancelText}>Cancel Subscription</Text>
-          <Text style={styles.cancelSub}>Access continues until {billing.renewalDate}</Text>
+          <Text style={styles.cancelSub}>Access continues until {renewalDate}</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>

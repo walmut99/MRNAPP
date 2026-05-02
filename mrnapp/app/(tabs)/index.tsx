@@ -7,23 +7,24 @@ import BodyComposition from '../../src/components/home/BodyComposition';
 import HealthFlags from '../../src/components/home/HealthFlags';
 import ProgressSection from '../../src/components/home/ProgressSection';
 import TodaysNutrition from '../../src/components/home/TodaysNutrition';
-import { patient } from '../../src/data/sarah';
+import { usePatient } from '../../src/hooks';
 import { colors, components, fontSize, fontWeight, radii, spacing } from '../../src/theme';
 
 function TopBar() {
+  const { data: patient } = usePatient();
   return (
     <View style={styles.topBar}>
       <View>
-        <Text style={styles.greeting}>Good morning, {patient.firstName}</Text>
+        <Text style={styles.greeting}>Good morning, {patient?.firstName}</Text>
         <View style={styles.weekChip}>
           <View style={styles.weekChipDot} />
           <Text style={styles.weekChipText}>
-            Week {patient.programWeek} of {patient.programTotalWeeks} · {patient.streakDays}-day streak
+            Week {patient?.programWeek} of {patient?.programTotalWeeks} · {patient?.streakDays}-day streak
           </Text>
         </View>
       </View>
       <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{patient.initials}</Text>
+        <Text style={styles.avatarText}>{patient?.initials}</Text>
       </View>
     </View>
   );

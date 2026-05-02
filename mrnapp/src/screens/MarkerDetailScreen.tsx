@@ -9,7 +9,7 @@ import GoalProgressBlock from '../components/marker/GoalProgressBlock';
 import MarkerSnapshot, { MarkerStatus } from '../components/marker/MarkerSnapshot';
 import MarkerTrendChart, { TrendPoint } from '../components/marker/MarkerTrendChart';
 import TreatmentBlock, { Treatment } from '../components/marker/TreatmentBlock';
-import { bodyCompMetrics, markers } from '../data/sarah';
+import { useBodyCompMetrics, useMarkers } from '../hooks';
 import { colors, fontSize, fontWeight, spacing } from '../theme';
 
 type FlaggedSeed = {
@@ -77,8 +77,21 @@ function splitValueAndUnit(raw: string): { value: string; unit: string } {
   return { value: trimmed, unit: '' };
 }
 
-function resolve(name: string): Resolved | null {
-  const flagged = (markers.flagged as FlaggedSeed[]).find((m) => m.name === name);
+type MarkersData = {
+  flagged: unknown[];
+  normal: unknown[];
+  nextDrawDate: string;
+} | null;
+
+type BodyCompMetricsData = Record<string, unknown> | null;
+
+function resolve(
+  name: string,
+  markersData: MarkersData,
+  bodyCompMetricsData: BodyCompMetricsData,
+): Resolved | null {
+  const flaggedList = (markersData?.flagged ?? []) as FlaggedSeed[];
+  const flagged = flaggedList.find((m) => m.name === name);
   if (flagged) {
     return {
       name: flagged.name,
@@ -95,7 +108,8 @@ function resolve(name: string): Resolved | null {
     };
   }
 
-  const normal = (markers.normal as NormalSeed[]).find((m) => m.name === name);
+  const normalList = (markersData?.normal ?? []) as NormalSeed[];
+  const normal = normalList.find((m) => m.name === name);
   if (normal) {
     const { value, unit } = splitValueAndUnit(normal.value);
     return {
@@ -112,7 +126,7 @@ function resolve(name: string): Resolved | null {
     };
   }
 
-  const bodyCompMap = bodyCompMetrics as Record<string, BodyCompSeed>;
+  const bodyCompMap = (bodyCompMetricsData ?? {}) as Record<string, BodyCompSeed>;
   const bc = bodyCompMap[name];
   if (bc) {
     return {
@@ -166,7 +180,9 @@ type Props = {
 
 export default function MarkerDetailScreen({ name }: Props) {
   const router = useRouter();
-  const marker = resolve(name);
+  const { data: markersData } = useMarkers();
+  const { data: bodyCompMetricsData } = useBodyCompMetrics();
+  const marker = resolve(name, markersData, bodyCompMetricsData);
 
   if (!marker) {
     return (

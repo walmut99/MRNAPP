@@ -14,7 +14,7 @@ import {
 
 import ChatBubble from '../../components/nutrition/ChatBubble';
 import QuickActionChip from '../../components/nutrition/QuickActionChip';
-import { proactiveMessage } from '../../data/sarah';
+import { useChat } from '../../hooks';
 import { colors, spacing } from '../../theme';
 
 type Message = {
@@ -25,16 +25,11 @@ type Message = {
 
 const QUICK_ACTIONS = ['Log a meal', "What should I eat?", 'Log manually', 'My targets'] as const;
 
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: '1',
-    role: 'ai',
-    text: proactiveMessage,
-  },
-];
-
 export default function ChatTab() {
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const { data: chat } = useChat();
+  const [messages, setMessages] = useState<Message[]>(() => [
+    { id: '1', role: 'ai', text: chat?.proactiveMessage ?? '' },
+  ]);
   const [draft, setDraft] = useState('');
   const inputRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);

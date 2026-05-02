@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { goal } from '../../data/sarah';
+import { useGoal } from '../../hooks';
 import { colors, fontSize, fontWeight, radii, spacing } from '../../theme';
 import Section from './Section';
 
@@ -15,22 +15,23 @@ function Thumb({ label }: { label: string }) {
 }
 
 export default function ProgressSection() {
-  const percent = Math.max(0, Math.min(100, goal.percent));
+  const { data: goal } = useGoal();
+  const percent = Math.max(0, Math.min(100, goal?.percent ?? 0));
 
   return (
     <Section
       label="Progress"
-      count={`Week ${goal.week} of ${goal.totalWeeks}`}>
+      count={`Week ${goal?.week ?? 0} of ${goal?.totalWeeks ?? 0}`}>
       <View style={styles.thumbs}>
         <Thumb label="Week 0" />
-        <Thumb label={`Week ${goal.week}`} />
+        <Thumb label={`Week ${goal?.week ?? 0}`} />
       </View>
       <View style={styles.goal}>
         <View style={styles.goalRow}>
           <Text style={styles.goalLabel}>
-            Body fat {goal.from}% → {goal.to}%
+            Body fat {goal?.from ?? 0}% → {goal?.to ?? 0}%
           </Text>
-          <Text style={styles.goalValue}>{goal.percent}%</Text>
+          <Text style={styles.goalValue}>{goal?.percent ?? 0}%</Text>
         </View>
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${percent}%` }]} />

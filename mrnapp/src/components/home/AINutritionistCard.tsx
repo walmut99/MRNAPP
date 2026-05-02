@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { proactiveMessage } from '../../data/sarah';
+import { useChat } from '../../hooks';
 import { colors, components, fontSize, fontWeight, radii, spacing } from '../../theme';
 import Section from './Section';
 
@@ -24,12 +24,14 @@ function Chip({ label, accent }: { label: string; accent?: boolean }) {
 }
 
 export default function AINutritionistCard() {
+  const { data: chat } = useChat();
+
   return (
     <Section label="AI Nutritionist">
       <View style={styles.card}>
         <AiAvatar />
         <View style={styles.body}>
-          <Text style={styles.message}>{proactiveMessage}</Text>
+          <Text style={styles.message}>{chat?.proactiveMessage}</Text>
           <View style={styles.chips}>
             <Chip label="What to eat?" accent />
             <Chip label="Log a meal" />

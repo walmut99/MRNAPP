@@ -7,7 +7,7 @@ import InBodyScoreCard from '../../components/lab/InBodyScoreCard';
 import SegmentalFigure, { Segments } from '../../components/lab/SegmentalFigure';
 import SegmentalLegend from '../../components/lab/SegmentalLegend';
 import TopStrip from '../../components/lab/TopStrip';
-import { inbody } from '../../data/sarah';
+import { useInBody } from '../../hooks';
 import { colors, fontWeight, spacing } from '../../theme';
 
 type BodyCompId = 'weight' | 'bodyFat' | 'muscleMass' | 'fatMass' | 'bmr' | 'visceralFat';
@@ -24,8 +24,9 @@ type BodyCompSeed = {
 
 export default function InBodyTab() {
   const router = useRouter();
-  const rows = inbody.bodyComposition as BodyCompSeed[];
-  const segments = inbody.segments as Segments;
+  const { data: inbody } = useInBody();
+  const rows = (inbody?.bodyComposition ?? []) as BodyCompSeed[];
+  const segments = (inbody?.segments ?? null) as Segments | null;
 
   const onBookPress = async () => {
     try {
@@ -47,17 +48,19 @@ export default function InBodyTab() {
         showsVerticalScrollIndicator={false}>
         <TopStrip
           label="Last InBody Scan"
-          value={inbody.lastScanDate}
+          value={inbody?.lastScanDate ?? ''}
           ctaLabel="Book scan"
           onPress={onBookPress}
         />
 
-        <InBodyScoreCard score={inbody.inbodyScore} />
+        <InBodyScoreCard score={inbody?.inbodyScore ?? 0} />
 
-        <Section label="Segmental Muscle">
-          <SegmentalFigure segments={segments} showDeltas={inbody.hasPreviousScan} />
-          <SegmentalLegend />
-        </Section>
+        {segments ? (
+          <Section label="Segmental Muscle">
+            <SegmentalFigure segments={segments} showDeltas={inbody?.hasPreviousScan ?? false} />
+            <SegmentalLegend />
+          </Section>
+        ) : null}
 
         <Section label="Body Composition">
           {rows.map((r, i) => (

@@ -6,7 +6,7 @@ import Section from '../components/home/Section';
 import BookingStrip from '../components/profile/BookingStrip';
 import IdentityCard from '../components/profile/IdentityCard';
 import ProfileRow from '../components/profile/ProfileRow';
-import { markers, patient } from '../data/sarah';
+import { useMarkers, usePatient } from '../hooks';
 import { colors, fontWeight, spacing } from '../theme';
 
 const CLINIC_PHONE = '22267222';
@@ -54,11 +54,13 @@ function RowList({ rows, onPress }: { rows: RowDef[]; onPress: (path: string) =>
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { data: patient } = usePatient();
+  const { data: markers } = useMarkers();
 
   const go = (path: string) => router.push(path as never);
 
   const billingRows: RowDef[] = [
-    { label: 'Plan & Billing', meta: patient.plan, path: '/profile/billing' },
+    { label: 'Plan & Billing', meta: patient?.plan, path: '/profile/billing' },
     { label: 'Upgrade Plan', path: '/profile/plans' },
   ];
 
@@ -95,7 +97,7 @@ export default function ProfileScreen() {
         </Section>
 
         <BookingStrip
-          date={markers.nextDrawDate}
+          date={markers?.nextDrawDate ?? ''}
           clinic={CLINIC_NAME}
           phone={CLINIC_PHONE}
         />

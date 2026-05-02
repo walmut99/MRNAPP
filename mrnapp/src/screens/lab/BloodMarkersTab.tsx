@@ -6,7 +6,7 @@ import BorderlineCard from '../../components/lab/BorderlineCard';
 import FlagCard from '../../components/lab/FlagCard';
 import NormalMarkerRow from '../../components/lab/NormalMarkerRow';
 import TopStrip from '../../components/lab/TopStrip';
-import { markers } from '../../data/sarah';
+import { useMarkers } from '../../hooks';
 import { colors, fontSize, fontWeight, letterSpacing } from '../../theme';
 
 type FlaggedMarker = {
@@ -43,8 +43,10 @@ function groupByCategory(rows: NormalMarker[]) {
 
 export default function BloodMarkersTab() {
   const router = useRouter();
-  const flagged = markers.flagged as FlaggedMarker[];
-  const normal = markers.normal as NormalMarker[];
+  const { data: markers } = useMarkers();
+  const flagged = (markers?.flagged ?? []) as FlaggedMarker[];
+  const normal = (markers?.normal ?? []) as NormalMarker[];
+  const nextDrawDate = markers?.nextDrawDate ?? '';
 
   const flagCards = flagged.filter((m) => m.status === 'high' || m.status === 'low');
   const borderlineCards = flagged.filter((m) => m.status === 'borderline');
@@ -69,7 +71,7 @@ export default function BloodMarkersTab() {
       showsVerticalScrollIndicator={false}>
       <TopStrip
         label="Next Blood Draw"
-        value={markers.nextDrawDate}
+        value={nextDrawDate}
         ctaLabel="Book now"
         onPress={onBookPress}
       />

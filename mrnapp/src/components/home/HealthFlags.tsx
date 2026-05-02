@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { flaggedMarkers } from '../../data/sarah';
+import { useMarkers } from '../../hooks';
 import { colors, fontSize, fontWeight, radii, spacing } from '../../theme';
 import Section from './Section';
 
@@ -15,6 +15,8 @@ const STATUS_STYLES: Record<Status, { bg: string; fg: string; arrow: string }> =
 
 export default function HealthFlags() {
   const router = useRouter();
+  const { data: markers } = useMarkers();
+  const flaggedMarkers = markers?.flagged ?? [];
 
   return (
     <Section

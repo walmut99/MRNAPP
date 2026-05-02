@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BillingCycleToggle, { Cycle } from '../components/plans/BillingCycleToggle';
 import PlanCard from '../components/plans/PlanCard';
-import { plans } from '../data/sarah';
+import { usePlans } from '../hooks';
 import { colors, fontWeight, spacing } from '../theme';
 
 type PlanSeed = {
@@ -24,8 +24,9 @@ type PlanSeed = {
 export default function PlansScreen() {
   const router = useRouter();
   const [cycle, setCycle] = useState<Cycle>('monthly');
+  const { data: plans } = usePlans();
 
-  const list = plans as PlanSeed[];
+  const list = (plans ?? []) as PlanSeed[];
 
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>

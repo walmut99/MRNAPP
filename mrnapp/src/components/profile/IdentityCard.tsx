@@ -1,25 +1,28 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { patient } from '../../data/sarah';
+import { usePatient } from '../../hooks';
 import { colors, fontWeight, letterSpacing, spacing } from '../../theme';
 
 const AVATAR_SIZE = 64;
 
 export default function IdentityCard() {
-  const meta = `${patient.age} · ${patient.sex} · ${patient.heightCm}cm · ${patient.activity}`;
+  const { data: patient } = usePatient();
+  const meta = patient
+    ? `${patient.age} · ${patient.sex} · ${patient.heightCm}cm · ${patient.activity}`
+    : '';
 
   return (
     <View style={styles.wrap}>
       <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{patient.initials}</Text>
+        <Text style={styles.avatarText}>{patient?.initials}</Text>
       </View>
       <View style={styles.right}>
         <Text style={styles.name}>
-          {patient.firstName} {patient.lastName}
+          {patient?.firstName} {patient?.lastName}
         </Text>
         <Text style={styles.meta}>{meta}</Text>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{patient.plan.toUpperCase()} PLAN</Text>
+          <Text style={styles.badgeText}>{patient?.plan.toUpperCase()} PLAN</Text>
         </View>
       </View>
     </View>

@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { bodyComp } from '../../data/sarah';
+import { useBodyComp } from '../../hooks';
 import { colors, fontSize, fontWeight, lineHeight, spacing } from '../../theme';
 import Section from './Section';
 
@@ -37,12 +37,15 @@ function StatCellInner({ stat }: { stat: Stat }) {
 
 export default function BodyComposition() {
   const router = useRouter();
+  const { data: bodyComp } = useBodyComp();
 
-  const stats: Stat[] = [
-    { label: 'Weight',   value: bodyComp.weight.value,  unit: bodyComp.weight.unit,  change: bodyComp.weight.change,  routeName: 'weight' },
-    { label: 'Body Fat', value: bodyComp.bodyFat.value, unit: bodyComp.bodyFat.unit, change: bodyComp.bodyFat.change, routeName: 'bodyFat' },
-    { label: 'Muscle',   value: bodyComp.muscle.value,  unit: bodyComp.muscle.unit,  change: bodyComp.muscle.change,  routeName: 'muscleMass' },
-  ];
+  const stats: Stat[] = bodyComp
+    ? [
+        { label: 'Weight',   value: bodyComp.weight.value,  unit: bodyComp.weight.unit,  change: bodyComp.weight.change,  routeName: 'weight' },
+        { label: 'Body Fat', value: bodyComp.bodyFat.value, unit: bodyComp.bodyFat.unit, change: bodyComp.bodyFat.change, routeName: 'bodyFat' },
+        { label: 'Muscle',   value: bodyComp.muscle.value,  unit: bodyComp.muscle.unit,  change: bodyComp.muscle.change,  routeName: 'muscleMass' },
+      ]
+    : [];
 
   return (
     <Section label="Body Composition">

@@ -1,62 +1,77 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { consumedToday, meals, targets } from '../../data/sarah';
+import { useDailyTargets, useMeals, useTodaysIntake } from '../../hooks';
 import { colors, fontSize, fontWeight, macroColors, spacing } from '../../theme';
 import { formatNumber } from '../../utils/formatNumber';
 import MacroArc from './MacroArc';
 import Section from './Section';
 
 function pct(current: number, target: number) {
+  if (!target) return 0;
   return Math.max(0, Math.min(100, (current / target) * 100));
 }
 
 export default function TodaysNutrition() {
-  const c = consumedToday;
-  const t = targets;
-  const lunch = meals.lunch!;
+  const { data: intake } = useTodaysIntake();
+  const { data: targets } = useDailyTargets();
+  const { data: meals } = useMeals();
+
+  const cCalories = intake?.calories ?? 0;
+  const cProtein = intake?.protein ?? 0;
+  const cFat = intake?.fat ?? 0;
+  const cCarbs = intake?.carbs ?? 0;
+
+  const tCalories = targets?.calories ?? 0;
+  const tProtein = targets?.protein ?? 0;
+  const tFat = targets?.fat ?? 0;
+  const tCarbs = targets?.carbs ?? 0;
+
+  const lunch = meals?.lunch;
 
   return (
     <Section
       label="Today's Nutrition"
-      count={`${formatNumber(c.calories)} / ${formatNumber(t.calories)} kcal`}>
+      count={`${formatNumber(cCalories)} / ${formatNumber(tCalories)} kcal`}>
       <View style={styles.row}>
         <MacroArc
           color={macroColors.calories}
-          percent={pct(c.calories, t.calories)}
+          percent={pct(cCalories, tCalories)}
           label="Calories"
-          value={`${formatNumber(c.calories)} / ${formatNumber(t.calories)}`}
+          value={`${formatNumber(cCalories)} / ${formatNumber(tCalories)}`}
         />
         <MacroArc
           color={macroColors.protein}
-          percent={pct(c.protein, t.protein)}
+          percent={pct(cProtein, tProtein)}
           label="Protein"
-          value={`${c.protein} / ${t.protein}g`}
+          value={`${cProtein} / ${tProtein}g`}
         />
         <MacroArc
           color={macroColors.fat}
-          percent={pct(c.fat, t.fat)}
+          percent={pct(cFat, tFat)}
           label="Fat"
-          value={`${c.fat} / ${t.fat}g`}
+          value={`${cFat} / ${tFat}g`}
         />
         <MacroArc
           color={macroColors.carbs}
-          percent={pct(c.carbs, t.carbs)}
+          percent={pct(cCarbs, tCarbs)}
           label="Carbs"
-          value={`${c.carbs} / ${t.carbs}g`}
+          value={`${cCarbs} / ${tCarbs}g`}
         />
       </View>
 
-      <View style={styles.mealStrip}>
-        <View style={styles.mealInfo}>
-          <Text style={styles.mealName}>Last meal · {lunch.name}</Text>
-          <Text style={styles.mealMeta}>
-            {formatNumber(lunch.calories)} kcal · {lunch.protein}g protein
-          </Text>
+      {lunch ? (
+        <View style={styles.mealStrip}>
+          <View style={styles.mealInfo}>
+            <Text style={styles.mealName}>Last meal · {lunch.name}</Text>
+            <Text style={styles.mealMeta}>
+              {formatNumber(lunch.calories)} kcal · {lunch.protein}g protein
+            </Text>
+          </View>
+          <Pressable>
+            <Text style={styles.link}>View log →</Text>
+          </Pressable>
         </View>
-        <Pressable>
-          <Text style={styles.link}>View log →</Text>
-        </Pressable>
-      </View>
+      ) : null}
     </Section>
   );
 }
