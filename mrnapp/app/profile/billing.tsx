@@ -1,5 +1,5 @@
-import ComingSoonScreen from '../../src/components/shared/ComingSoonScreen';
+import BillingScreen from '../../src/screens/BillingScreen';
 
 export default function Billing() {
-  return <ComingSoonScreen title="Plan & Billing" />;
+  return <BillingScreen />;
 }

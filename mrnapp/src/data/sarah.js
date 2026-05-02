@@ -214,6 +214,55 @@ export const bodyCompMetrics = {
   },
 };
 
+export const billing = {
+  currentPlan: 'Premium',         // 'Essentials' | 'Premium'
+  cycle: 'monthly',               // 'monthly' | 'annual'
+  renewalDate: 'May 14, 2026',
+  monthlyPrice: 18,
+  annualPrice: 180,
+  annualEffectiveMonthly: 15,
+  card: { brand: 'VISA', last4: '4242', expiry: '08/28' },
+  history: [
+    { date: 'Apr 14, 2026', plan: 'Premium · Monthly', amount: '18.000 KWD' },
+    { date: 'Mar 14, 2026', plan: 'Premium · Monthly', amount: '18.000 KWD' },
+    { date: 'Feb 14, 2026', plan: 'Premium · Monthly', amount: '18.000 KWD' },
+  ],
+  essentialsUsage: {
+    aiMessagesUsed: 8,
+    aiMessagesLimit: 15,
+    bloodTestsUsed: 0,
+    bloodTestsLimit: 1,
+    inbodyScansUsed: 1,
+    inbodyScansLimit: 1,
+  },
+};
+
+export const plans = [
+  {
+    id: 'essentials',
+    name: 'Essentials',
+    monthly: 9,
+    annual: 7.5,
+    annualTotal: 90,
+    keyLimit: '15 AI msg/day · 1 of each upload · 30-day trends',
+    differentiator: 'Entry tier — full AI nutritionist with daily cap and trial uploads.',
+    current: false,
+    popular: false,
+  },
+  {
+    id: 'premium',
+    name: 'Premium',
+    monthly: 18,
+    annual: 15,
+    annualTotal: 180,
+    keyLimit: 'Unlimited',
+    differentiator:
+      'Unlimited AI · unlimited uploads · Sunday review · treatment tracking · weekly meal plans.',
+    current: true,
+    popular: true,
+  },
+];
+
 export default {
   patient,
   goal,
@@ -226,4 +275,6 @@ export default {
   markers,
   inbody,
   bodyCompMetrics,
+  billing,
+  plans,
 };

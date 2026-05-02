@@ -1,5 +1,5 @@
-import ComingSoonScreen from '../../src/components/shared/ComingSoonScreen';
+import PlansScreen from '../../src/screens/PlansScreen';
 
 export default function Plans() {
-  return <ComingSoonScreen title="Upgrade Plan" />;
+  return <PlansScreen />;
 }
