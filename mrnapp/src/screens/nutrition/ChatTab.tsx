@@ -1,19 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { useHeaderHeight } from '@react-navigation/elements';
-import { useEffect, useRef, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import ChatBubble from '../../components/nutrition/ChatBubble';
-import QuickActionChip from '../../components/nutrition/QuickActionChip';
 import { useChat } from '../../hooks';
 import { colors, spacing } from '../../theme';
 
@@ -23,60 +11,17 @@ type Message = {
   text: string;
 };
 
-const QUICK_ACTIONS = ['Log a meal', "What should I eat?", 'Log manually', 'My targets'] as const;
-
 export default function ChatTab() {
   const { data: chat } = useChat();
-  const [messages, setMessages] = useState<Message[]>(() => [
+  const messages: Message[] = [
     { id: '1', role: 'ai', text: chat?.proactiveMessage ?? '' },
-  ]);
-  const [draft, setDraft] = useState('');
-  const inputRef = useRef<TextInput>(null);
-  const scrollRef = useRef<ScrollView>(null);
-
-  const headerHeight = useHeaderHeight();
-  const tabBarHeight = useBottomTabBarHeight();
-
-  useEffect(() => {
-    scrollRef.current?.scrollToEnd({ animated: true });
-  }, [messages.length]);
-
-  const send = () => {
-    const text = draft.trim();
-    if (!text) return;
-    const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', text };
-    setMessages((prev) => [...prev, userMsg]);
-    setDraft('');
-
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { id: `a-${Date.now()}`, role: 'ai', text: 'Got it, working on that…' },
-      ]);
-    }, 600);
-  };
-
-  const onChipPress = (label: string) => {
-    setDraft(label);
-    inputRef.current?.focus();
-  };
-
-  const onCameraPress = () => {
-    // placeholder
-  };
-
-  const canSend = draft.trim().length > 0;
+  ];
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + tabBarHeight : 0}>
+    <View style={styles.flex}>
       <ScrollView
-        ref={scrollRef}
         style={styles.flex}
         contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         {messages.map((m) => (
           <View key={m.id} style={styles.bubbleWrap}>
@@ -85,41 +30,19 @@ export default function ChatTab() {
         ))}
       </ScrollView>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.chipsContent}
-        style={styles.chipsRow}>
-        {QUICK_ACTIONS.map((a) => (
-          <View key={a} style={styles.chipWrap}>
-            <QuickActionChip label={a} onPress={() => onChipPress(a)} />
-          </View>
-        ))}
-      </ScrollView>
-
-      <View style={styles.inputBar}>
-        <Pressable onPress={onCameraPress} hitSlop={8} style={styles.cameraBtn}>
-          <Ionicons name="camera-outline" size={24} color={colors.textSecondary} />
-        </Pressable>
-        <TextInput
-          ref={inputRef}
-          value={draft}
-          onChangeText={setDraft}
-          placeholder="Ask a question or log a meal..."
-          placeholderTextColor={colors.textSecondary}
-          style={styles.input}
-          multiline
-          maxLength={2000}
-        />
-        <Pressable
-          onPress={send}
-          disabled={!canSend}
-          style={[styles.sendBtn, !canSend && styles.sendBtnDisabled]}>
-          <Ionicons name="arrow-up" size={20} color={colors.backgroundPrimary} />
-        </Pressable>
+      {/*
+        TEMPORARY PLACEHOLDER — chat input removed pending backend integration.
+        When Claude API is wired, restore the input with:
+        - react-native-keyboard-controller for proper keyboard handling
+        - Real send button calling the AI API
+        - Real chip actions (Log a meal, etc.)
+        See KEYBOARD_ISSUE.md for context on prior keyboard handling problems.
+      */}
+      <View style={styles.placeholder}>
+        <Ionicons name="lock-closed-outline" size={16} color={colors.textSecondary} />
+        <Text style={styles.placeholderText}>Chat input coming with the next update</Text>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -130,62 +53,27 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'flex-end',
     paddingHorizontal: spacing.sectionX,
     paddingTop: 16,
-    paddingBottom: 8,
+    paddingBottom: 16,
   },
   bubbleWrap: {
     marginBottom: 12,
   },
-  chipsRow: {
-    flexGrow: 0,
-  },
-  chipsContent: {
-    paddingHorizontal: spacing.sectionX,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  chipWrap: {
-    marginRight: 0,
-  },
-  inputBar: {
+  placeholder: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
     paddingHorizontal: spacing.sectionX,
-    paddingVertical: 10,
-    backgroundColor: colors.backgroundPrimary,
+    paddingVertical: 14,
+    backgroundColor: colors.backgroundSecondary,
     borderTopWidth: 0.5,
     borderTopColor: colors.borderTertiary,
   },
-  cameraBtn: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  input: {
-    flex: 1,
-    minHeight: 36,
-    maxHeight: 96,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: 18,
-    color: colors.textPrimary,
-    fontSize: 14,
-  },
-  sendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.accent,
-    marginLeft: 0,
-  },
-  sendBtnDisabled: {
-    backgroundColor: colors.borderTertiary,
+  placeholderText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 12 * 1.4,
   },
 });

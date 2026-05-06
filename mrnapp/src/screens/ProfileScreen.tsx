@@ -7,6 +7,7 @@ import BookingStrip from '../components/profile/BookingStrip';
 import IdentityCard from '../components/profile/IdentityCard';
 import ProfileRow from '../components/profile/ProfileRow';
 import { useMarkers, usePatient } from '../hooks';
+import { useOnboardingState } from '../hooks/useOnboardingState';
 import { colors, fontWeight, spacing } from '../theme';
 
 const CLINIC_PHONE = '22267222';
@@ -56,6 +57,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { data: patient } = usePatient();
   const { data: markers } = useMarkers();
+  const { reset: resetOnboarding } = useOnboardingState();
 
   const go = (path: string) => router.push(path as never);
 
@@ -66,6 +68,11 @@ export default function ProfileScreen() {
 
   const onSignOut = () => {
     console.log('Sign out pressed');
+  };
+
+  const onResetOnboarding = () => {
+    resetOnboarding();
+    router.replace('/onboarding');
   };
 
   return (
@@ -101,6 +108,14 @@ export default function ProfileScreen() {
           clinic={CLINIC_NAME}
           phone={CLINIC_PHONE}
         />
+
+        {__DEV__ ? (
+          <Pressable
+            onPress={onResetOnboarding}
+            style={({ pressed }) => [styles.devReset, pressed && { opacity: 0.6 }]}>
+            <Text style={styles.devResetText}>Reset Onboarding (Dev)</Text>
+          </Pressable>
+        ) : null}
 
         <Pressable
           onPress={onSignOut}
@@ -144,5 +159,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: fontWeight.medium as '500',
     color: colors.danger,
+  },
+  devReset: {
+    marginHorizontal: 22,
+    marginTop: 14,
+    paddingVertical: 10,
+    borderRadius: 9999,
+    backgroundColor: colors.backgroundSecondary,
+    alignItems: 'center',
+  },
+  devResetText: {
+    fontSize: 11,
+    fontWeight: fontWeight.medium as '500',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
