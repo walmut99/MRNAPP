@@ -1,5 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import SubTabSwitcher from '../components/nutrition/SubTabSwitcher';
@@ -10,12 +12,21 @@ import InBodyTab from './lab/InBodyTab';
 const TABS = ['Blood Markers', 'InBody'] as const;
 
 export default function LabScreen() {
+  const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Health Data</Text>
+        <Text style={styles.title}>Lab</Text>
+        <Pressable
+          onPress={() => router.push('/(modals)/add-health-data')}
+          hitSlop={8}
+          style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.6 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Add health data">
+          <Ionicons name="add" size={18} color={colors.accentDark} />
+        </Pressable>
       </View>
       <SubTabSwitcher
         tabs={TABS}
@@ -38,6 +49,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundPrimary,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.sectionX,
     paddingTop: spacing.topBarV,
     paddingBottom: 6,
@@ -47,6 +61,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: fontWeight.medium as '500',
     color: colors.textPrimary,
+  },
+  addBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   divider: {
     height: 0.5,

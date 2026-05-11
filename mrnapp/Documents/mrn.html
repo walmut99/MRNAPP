@@ -5,21 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>MRN (مرن) — Prototype</title>
 <!--
-  MRN (مرن) HTML Prototype
+  MRN (مرن) HTML Prototype — Updated May 2026
   Based on MRN_Specification.docx — Sections 4, 5, 10
   Patient data: Sarah Al-Mutairi (Week 6 of 16, Premium plan)
+
+  REPRESENTED SCREENS (top-level + sub-pages + deep-link screens):
+    - Home (body comp, macros, activity, AI card, progress, health flags)
+    - Nutrition (Chat tab — input REMOVED pending backend, see KEYBOARD_ISSUE.md / Today's Log tab)
+    - Lab (Blood Markers + InBody — Trends sub-tab REMOVED, trends now live in Marker Detail)
+    - Marker Detail (deep-link screen for any tappable marker — flagged, normal, body comp)
+    - Profile (with dev-only Reset Onboarding button)
+    - Subscription (Plan & Billing + Plans Comparison)
+    - Upload Flow (modal: source picker, parsing state, success state — confirmation screen
+      paused pending doctor review of marker categories)
+    - Stub screens for Profile sub-pages (food library, blood test history, etc.)
+
+  ONBOARDING FLOW IS IN A SEPARATE FILE: mrn_onboarding.html
+  (19 screens covering Welcome → Basics → Dietary → Medical → Goal/Plan)
 
   Structure:
     1. Design tokens (CSS custom properties)
     2. Reset + base styles
     3. Phone frame (desktop only) + app viewport
     4. Shared components (section label, divider, top bar, bottom nav, back bar)
-    5. Screen styles (home, nutrition, lab, profile, billing, plans, progress, stubs)
+    5. Screen styles (home, nutrition, lab, profile, billing, plans, progress, marker detail, uploads, stubs)
     6. Markup — all screens rendered, hidden/shown via JS routing
     7. State + data + routing (single commented JS block at bottom)
 
   All tokens are named to map 1:1 to a future React Native theme file.
   Inline comments flag values invented for the prototype that are not in the spec.
+
+  CURRENT PRICING (locked):
+    Essentials: 9 KWD/mo (90 KWD/yr) — 15 AI msg/day, 1 of each upload, 30-day trends
+    Premium:    18 KWD/mo (180 KWD/yr) — Unlimited AI, all features, "Our Recommendation"
+    Premium+ and Family deferred post-launch (kept in data for design reference)
 -->
 <style>
   /* =========================================================================
@@ -175,6 +194,12 @@
   .top-bar__greeting {
     font-size: 15px;
     font-weight: var(--weight-medium);
+  }
+  /* Used on Nutrition, Lab, Profile tabs — larger clean title with no subtitle/avatar */
+  .top-bar__greeting--large {
+    font-size: 28px;
+    font-weight: var(--weight-medium);
+    letter-spacing: -0.01em;
   }
   .top-bar__greeting-sub {
     font-size: var(--font-size-sublabel);
@@ -643,36 +668,55 @@
     flex-shrink: 0;
   }
 
+  /* Chat placeholder strip — replaces the input area while chat input is removed pending backend integration */
+  .chat-placeholder-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px var(--space-section-x);
+    background: var(--color-bg-secondary);
+    border-top: var(--space-divider) solid var(--color-border-tertiary);
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
   /* ----- Nutrition: Today's log ----- */
   .consumed-grid {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 18px;
   }
   .consumed-row {
     display: grid;
-    grid-template-columns: 80px 1fr auto;
-    gap: 10px;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    row-gap: 6px;
     align-items: center;
   }
-  .consumed-row__label { font-size: 12px; color: var(--color-text-secondary); }
-  .consumed-row__value { font-size: 12px; font-weight: var(--weight-medium); }
-  .consumed-row .progress-bar__fill { background: var(--color-macro-calories); }
-  .consumed-row--protein .progress-bar__fill { background: var(--color-macro-protein); }
-  .consumed-row--fat .progress-bar__fill { background: var(--color-macro-fat); }
-  .consumed-row--carbs .progress-bar__fill { background: var(--color-macro-carbs); }
+  .consumed-row__main { grid-column: 1; grid-row: 1; }
+  .consumed-row__pct { grid-column: 2; grid-row: 1; font-size: 16px; font-weight: var(--weight-medium); color: var(--color-text-primary); }
+  .consumed-row__bar { grid-column: 1 / -1; grid-row: 2; height: 6px; background: var(--color-border-tertiary); border-radius: 999px; overflow: hidden; }
+  .consumed-row__bar-fill { height: 100%; border-radius: 999px; }
+  .consumed-row__label { font-size: 16px; font-weight: var(--weight-medium); color: var(--color-text-primary); }
+  .consumed-row__sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
 
   .meal-slot {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 12px;
     align-items: center;
-    padding: 12px 0;
-    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+    padding: 14px 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
   }
   .meal-slot:last-child { border-bottom: none; }
   .meal-slot__info { display: flex; flex-direction: column; gap: 3px; }
-  .meal-slot__name { font-size: 13px; font-weight: var(--weight-medium); }
+  .meal-slot__name { font-size: 14px; font-weight: var(--weight-medium); }
+  .meal-slot__desc { font-size: 12px; color: var(--color-text-secondary); }
   .meal-slot__macros { font-size: var(--font-size-sublabel); color: var(--color-text-secondary); }
+  .meal-slot__macros-compact { font-size: 12px; color: var(--color-text-secondary); }
   .meal-slot__right { display: flex; align-items: center; gap: 8px; }
   .source-badge {
     font-size: 10px;
@@ -728,22 +772,45 @@
     letter-spacing: 0.02em;
   }
   .suggestion-card__badge--warn { background: var(--color-warn-light); color: var(--color-warn); }
-  .suggestion-card__impact {
+  .suggestion-card__macros {
     display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
   }
-  .impact-pill {
-    font-size: 10px;
-    padding: 3px 8px;
-    background: var(--color-bg-primary);
-    border-radius: 999px;
+  .suggestion-macro-row {
+    display: grid;
+    grid-template-columns: 70px 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .suggestion-macro-row__label {
+    font-size: 12px;
     color: var(--color-text-secondary);
-    font-weight: var(--weight-medium);
   }
-  .impact-pill strong {
-    color: var(--color-text-primary);
+  .suggestion-macro-row__bar {
+    height: 6px;
+    background: var(--color-border-tertiary);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .suggestion-macro-row__bar-fill {
+    height: 100%;
+    border-radius: 999px;
+  }
+  .suggestion-macro-row__value {
+    font-size: 12px;
     font-weight: var(--weight-medium);
+    color: var(--color-text-primary);
+  }
+  .suggestion-card__log {
+    color: var(--color-accent);
+    font-size: 13px;
+    font-weight: var(--weight-medium);
+    padding: 0;
+    margin-left: auto;
+    display: block;
+    margin-top: 4px;
   }
 
   /* ----- Lab: Blood markers tab ----- */
@@ -991,6 +1058,326 @@
     align-items: flex-start;
   }
   .ai-observation__body { font-size: 12px; color: var(--color-accent-dark); line-height: 1.5; flex: 1; }
+
+  /* ----- Marker Detail screen ----- */
+  .marker-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .marker-hero__value { display: flex; align-items: baseline; gap: 4px; }
+  .marker-hero__number { font-size: 36px; font-weight: var(--weight-medium); letter-spacing: -0.02em; }
+  .marker-hero__unit { font-size: 14px; color: var(--color-text-secondary); }
+  .marker-hero__change {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+  }
+  .marker-hero__range {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .status-pill--high { background: var(--color-danger-light); color: var(--color-danger); }
+  .status-pill--low { background: var(--color-warn-light); color: var(--color-warn); }
+  .status-pill--borderline { background: var(--color-borderline-light); color: var(--color-borderline); }
+  .status-pill--normal { background: var(--color-accent-light); color: var(--color-accent-dark); }
+
+  .goal-progress-card {
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .goal-progress-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .goal-progress-card__from-to {
+    font-size: 16px;
+    font-weight: var(--weight-medium);
+  }
+  .goal-progress-card__type {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+  }
+  .goal-progress-card__pct {
+    font-size: 22px;
+    font-weight: var(--weight-medium);
+    color: var(--color-accent-dark);
+  }
+  .goal-progress-card__note {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .cta-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: var(--weight-medium);
+  }
+  .cta-tertiary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    background: transparent;
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: var(--weight-medium);
+  }
+  .treatment-stub {
+    background: var(--color-bg-secondary);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .treatment-stub__text {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .treatment-empty {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+    text-align: center;
+    padding: 8px 16px;
+  }
+
+  /* ----- Upload flow (modal style) ----- */
+  .screen--modal {
+    background: var(--color-bg-primary);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px var(--space-section-x);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+    flex-shrink: 0;
+  }
+  .modal-header__title {
+    font-size: 15px;
+    font-weight: var(--weight-medium);
+  }
+  .modal-header__close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .upload-intro { margin-bottom: 28px; }
+  .upload-intro__title {
+    font-size: 22px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+  }
+  .upload-intro__sub {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+  }
+  .upload-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .upload-option {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 18px 16px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 14px;
+    text-align: left;
+    width: 100%;
+  }
+  .upload-option__icon {
+    width: 44px;
+    height: 44px;
+    background: var(--color-accent-light);
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .upload-option__body { flex: 1; }
+  .upload-option__title {
+    font-size: 15px;
+    font-weight: var(--weight-medium);
+    margin-bottom: 2px;
+  }
+  .upload-option__sub {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .upload-option__chevron {
+    color: var(--color-text-secondary);
+    font-size: 18px;
+  }
+
+  .upload-parsing {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px var(--space-section-x);
+    text-align: center;
+  }
+  .upload-parsing__spinner {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    margin-bottom: 32px;
+  }
+  .upload-parsing__icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .upload-parsing__title {
+    font-size: 18px;
+    font-weight: var(--weight-medium);
+    margin-bottom: 8px;
+  }
+  .upload-parsing__sub {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+    max-width: 260px;
+  }
+  .upload-parsing__footer {
+    border-top: var(--space-divider) solid var(--color-border-tertiary);
+    padding: 14px var(--space-section-x);
+    text-align: center;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+
+  .upload-success {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px var(--space-section-x);
+    text-align: center;
+  }
+  .upload-success__check {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: var(--color-accent-light);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .upload-success__title {
+    font-size: 22px;
+    font-weight: var(--weight-medium);
+    margin-bottom: 10px;
+  }
+  .upload-success__sub {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+    max-width: 280px;
+    margin-bottom: 28px;
+  }
+  .upload-success__peek {
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+    padding: 14px 16px;
+    width: 100%;
+    max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .upload-success__peek-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .upload-success__peek-label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .upload-success__peek-value {
+    font-size: 12px;
+    font-weight: var(--weight-medium);
+  }
+  .upload-success__peek-value--low { color: var(--color-warn); }
+  .upload-success__peek-value--high { color: var(--color-danger); }
+  .upload-success__footer {
+    padding: 14px var(--space-section-x) 24px;
+    flex-shrink: 0;
+  }
+  .cta-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--color-accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: var(--weight-medium);
+    margin-bottom: 4px;
+  }
+  .cta-text {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    font-weight: var(--weight-medium);
+  }
 
   /* ----- Profile ----- */
   .identity-card {
@@ -1511,7 +1898,7 @@ const DATA = {
       observation: "LDL's trending down — 128 to 118, steady improvement. Keep fish twice a week and the current fibre intake and this should cross under 100 by your next draw.",
     },
     bodyFat: {
-      name: 'Body fat %', unit: '%', status: 'ontrack',
+      name: 'Body Fat %', unit: '%', status: 'ontrack',
       points: [
         { date: 'Mar 5',  label: 'Week 0', value: 29.5 },
         { date: 'Apr 2',  label: 'Week 3', value: 28.8 },
@@ -1519,6 +1906,26 @@ const DATA = {
       ],
       range: [21, 30],
       observation: "Down 1.4% over six weeks — that's exactly the pace your goal needs. Protein targets are the lever here, so keep closing those gaps at lunch and dinner.",
+    },
+    weight: {
+      name: 'Weight', unit: 'kg', status: 'ontrack',
+      points: [
+        { date: 'Mar 5',  label: 'Week 0', value: 71.0 },
+        { date: 'Apr 2',  label: 'Week 3', value: 69.7 },
+        { date: 'Apr 16', label: 'Week 6', value: 68.4 },
+      ],
+      range: [55, 70],
+      observation: "Down 2.6 kg over six weeks at the right pace. Body fat is dropping faster than muscle, which is exactly what we want. Keep doing what you're doing.",
+    },
+    muscleMass: {
+      name: 'Muscle Mass', unit: 'kg', status: 'ontrack',
+      points: [
+        { date: 'Mar 5',  label: 'Week 0', value: 23.8 },
+        { date: 'Apr 2',  label: 'Week 3', value: 24.0 },
+        { date: 'Apr 16', label: 'Week 6', value: 24.1 },
+      ],
+      range: [22, 28],
+      observation: "Up 0.3 kg of muscle while losing fat — a great trajectory. Keep protein at 110g+ daily and your strength training rhythm.",
     },
     vitaminD: {
       name: 'Vitamin D', unit: 'ng/mL', status: 'normal',
@@ -1529,6 +1936,26 @@ const DATA = {
       ],
       range: [30, 100],
       observation: "Comfortably in range and rising — 38 to 42. Kuwait sun helps. Nothing to change here.",
+    },
+    weight: {
+      name: 'Weight', unit: 'kg', status: 'ontrack',
+      points: [
+        { date: 'Mar 5',  label: 'Week 0', value: 71.0 },
+        { date: 'Apr 2',  label: 'Week 3', value: 69.7 },
+        { date: 'Apr 16', label: 'Week 6', value: 68.4 },
+      ],
+      range: [55, 70],
+      observation: "Down 2.6 kg over six weeks at a steady pace. Most of this is fat loss given your protein intake and muscle preservation. Keep the current daily target.",
+    },
+    muscleMass: {
+      name: 'Muscle Mass', unit: 'kg', status: 'ontrack',
+      points: [
+        { date: 'Mar 5',  label: 'Week 0', value: 23.8 },
+        { date: 'Apr 2',  label: 'Week 3', value: 24.0 },
+        { date: 'Apr 16', label: 'Week 6', value: 24.1 },
+      ],
+      range: [22, 28],
+      observation: "Holding muscle while losing fat — the protein consistency is paying off. Your left leg muscle remains slightly below the others, so adding some single-leg work would help balance.",
     },
   },
   // Scripted chat conversation — faithful to Section 6 tone rules
@@ -1545,30 +1972,31 @@ const DATA = {
   proactiveMessage: "Morning Sarah. Ferritin's still low and yesterday's protein came up 18g short. Let's fix both at lunch — grilled beef kofta with a side of lentils hits iron and closes the protein gap.",
   billing: {
     renewalDate: 'May 14, 2026',
-    monthlyPrice: 19,
-    annualPrice: 171,
+    monthlyPrice: 18,
+    annualPrice: 180,
     card: { brand: 'VISA', last4: '4242', expiry: '08/28' },
     history: [
-      { date: 'Apr 14, 2026', plan: 'Premium · Monthly', amount: '19.000 KWD' },
-      { date: 'Mar 14, 2026', plan: 'Premium · Monthly', amount: '19.000 KWD' },
-      { date: 'Feb 14, 2026', plan: 'Premium · Monthly', amount: '19.000 KWD' },
+      { date: 'Apr 14, 2026', plan: 'Premium · Monthly', amount: '18.000 KWD' },
+      { date: 'Mar 14, 2026', plan: 'Premium · Monthly', amount: '18.000 KWD' },
+      { date: 'Feb 14, 2026', plan: 'Premium · Monthly', amount: '18.000 KWD' },
     ],
-    // Core-view data (when dev toggle is flipped)
+    // Essentials-view data (when dev toggle is flipped) — for Essentials tier showing 15/day cap
     coreUsage: {
-      aiMessagesUsed: 14,
-      aiMessagesLimit: 20,
+      aiMessagesUsed: 11,
+      aiMessagesLimit: 15,
       bloodTestsUsed: 1,
-      bloodTestsLimit: 3,
+      bloodTestsLimit: 1,
     },
   },
   plans: [
-    { id: 'core', name: 'Core', monthly: 9, annual: 6.75, annualTotal: 81,
-      keyLimit: '20 AI messages/day · 30-day trends', differentiator: 'Entry tier — full AI nutritionist with daily cap.' },
-    { id: 'premium', name: 'Premium', monthly: 19, annual: 14.25, annualTotal: 171, popular: true, current: true,
-      keyLimit: 'Unlimited', differentiator: 'Unlimited AI · Sunday review · full trend history.' },
-    { id: 'premium-plus', name: 'Premium+', monthly: 32, annual: 27, annualTotal: 324, premiumPlus: true,
+    { id: 'essentials', name: 'Essentials', monthly: 9, annual: 7.50, annualTotal: 90,
+      keyLimit: '15 AI messages/day · 30-day trends · 1 of each upload type', differentiator: 'Entry tier — full AI nutritionist with daily cap.' },
+    { id: 'premium', name: 'Premium', monthly: 18, annual: 15, annualTotal: 180, popular: true, current: true,
+      keyLimit: 'Unlimited', differentiator: 'Unlimited AI · Sunday review · weekly meal plans · treatment tracking · monthly goal recalibration.' },
+    /* Premium+ and Family are deferred post-launch — kept here for design pattern reference only. */
+    { id: 'premium-plus', name: 'Premium+', monthly: 32, annual: 27, annualTotal: 324, premiumPlus: true, deferred: true,
       keyLimit: 'Unlimited', differentiator: 'Quarterly nutritionist consultation · 25% off blood draws · companion account at half price.' },
-    { id: 'family', name: 'Family', monthly: 45, annual: 37.50, annualTotal: 450,
+    { id: 'family', name: 'Family', monthly: 45, annual: 37.50, annualTotal: 450, deferred: true,
       keyLimit: '4 Premium accounts', differentiator: '4 independent Premium accounts, one billing relationship.' },
   ],
   notifications: {
@@ -1578,14 +2006,24 @@ const DATA = {
 
 /* ----- 7.2 Router state ----- */
 const state = {
-  currentScreen: 'home',       // 'home' | 'nutrition' | 'lab' | 'profile' | sub-pages
+  currentScreen: 'home',       // 'home' | 'nutrition' | 'lab' | 'profile' | 'marker-detail' | 'upload-source' | 'upload-parsing' | 'upload-success' | 'onboarding-{stepKey}'
   nutritionTab: 'chat',        // 'chat' | 'log'
-  labTab: 'blood',             // 'blood' | 'inbody' | 'trends'
+  labTab: 'blood',             // 'blood' | 'inbody' (Trends removed — moved into Marker Detail)
   trendMarker: 'cortisol',     // key of DATA.trends
   trendsDropdownOpen: false,
   billingCycle: 'monthly',     // 'monthly' | 'annual'
   billingView: 'premium',      // 'premium' | 'core' — dev-only toggle
   waterMl: DATA.consumedToday.water,
+  /* Marker detail — which marker is being viewed, if any */
+  activeMarkerKey: null,       // 'cortisol' | 'ferritin' | 'ldl' | 'vitamin-d' | 'body-fat' | 'weight' | 'muscle-mass' etc.
+  /* Onboarding — for the prototype, set to 'welcome' to demo the flow.
+     In the React Native app, this is gated by AsyncStorage `state.completed`. */
+  onboardingStep: 'welcome',   // 'welcome' | 'intro' | 'dob' | 'sex' | 'height' | 'weight' | 'activity' | 'body-fat' | 'inbody-upload' | 'dietary' | 'allergies' | 'meals' | 'supplements' | 'medical-intro' | 'conditions' | 'pregnancy' | 'ai-intro' | 'goal' | 'plan'
+  onboardingAnswers: {
+    sex: null,                 // 'female' | 'male' | null — affects whether pregnancy screen shows
+    selectedGoal: null,
+    selectedPlan: null,
+  },
 };
 
 /* ----- 7.3 Small render helpers ----- */
@@ -1770,7 +2208,7 @@ function trendChartSvg(marker) {
     <circle cx="${xFor(i)}" cy="${yFor(p.value)}" r="5" fill="${statusColour}"/>
     <circle cx="${xFor(i)}" cy="${yFor(p.value)}" r="2.5" fill="#fff"/>
     <text x="${xFor(i)}" y="${yFor(p.value) - 12}" text-anchor="middle"
-          font-size="11" font-weight="500" fill="var(--color-text-primary)">${p.value}</text>
+          font-size="11" font-weight="500" fill="var(--color-text-primary)">${p.value} ${marker.unit}</text>
     <text x="${xFor(i)}" y="${H - 10}" text-anchor="middle"
           font-size="10" fill="var(--color-text-secondary)">${p.date}</text>
   `).join('');
@@ -1813,7 +2251,7 @@ function renderHome() {
 
       <!-- Body composition -->
       <section class="section">
-        <div class="section__head"><div class="section-label">Body composition</div></div>
+        <div class="section__head"><div class="section-label">Body Composition</div></div>
         <div class="bodycomp-row">
           <div class="bodycomp-stat">
             <div class="bodycomp-stat__label">Weight</div>
@@ -1836,7 +2274,7 @@ function renderHome() {
       <!-- Today's nutrition -->
       <section class="section">
         <div class="section__head">
-          <div class="section-label">Today's nutrition</div>
+          <div class="section-label">Today's Nutrition</div>
           <div class="section-label section-label--count">${c.calories} / ${t.calories} kcal</div>
         </div>
         <div class="macro-row">
@@ -1902,7 +2340,7 @@ function renderHome() {
 
       <!-- AI Nutritionist card -->
       <section class="section">
-        <div class="section__head"><div class="section-label">AI nutritionist</div></div>
+        <div class="section__head"><div class="section-label">AI Nutritionist</div></div>
         <div class="ai-card">
           <div class="avatar avatar--ai">AI</div>
           <div class="ai-card__body">
@@ -1937,11 +2375,11 @@ function renderHome() {
       <!-- Health flags -->
       <section class="section">
         <div class="section__head">
-          <div class="section-label">Health flags</div>
+          <div class="section-label">Health Flags</div>
           <div class="section-label section-label--count">${DATA.markers.flagged.length} flagged</div>
         </div>
         ${DATA.markers.flagged.map(m => `
-          <div class="flag-row flag-row--${m.status}" data-nav="lab" data-subtab="blood">
+          <div class="flag-row flag-row--${m.status}" data-marker-detail="${m.name.toLowerCase().replace(/ /g, '')}" style="cursor: pointer;">
             <div class="flag-row__left">
               <span>${m.status === 'high' ? '↑' : m.status === 'low' ? '↓' : '⚠'}</span>
               <span>${m.name} · ${m.status.toUpperCase()}</span>
@@ -1960,15 +2398,13 @@ function renderNutrition() {
 
       <div class="top-bar">
         <div>
-          <div class="top-bar__greeting">AI Nutritionist</div>
-          <div class="top-bar__greeting-sub">Your personal guide</div>
+          <div class="top-bar__greeting top-bar__greeting--large">AI Nutritionist</div>
         </div>
-        <div class="avatar avatar--ai">AI</div>
       </div>
 
       <div class="subtab-bar">
         <button class="subtab-bar__item ${state.nutritionTab === 'chat' ? 'subtab-bar__item--active' : ''}" data-subtab-switch="chat">Chat</button>
-        <button class="subtab-bar__item ${state.nutritionTab === 'log' ? 'subtab-bar__item--active' : ''}" data-subtab-switch="log">Today's log</button>
+        <button class="subtab-bar__item ${state.nutritionTab === 'log' ? 'subtab-bar__item--active' : ''}" data-subtab-switch="log">Today's Log</button>
       </div>
 
       ${state.nutritionTab === 'chat' ? renderChatTab() : renderLogTab()}
@@ -1992,28 +2428,22 @@ function renderChatTab() {
       }).join('')}
     </div>
 
-    <div class="chat-input-area">
-      <div class="chip-scroll">
-        <button class="chip">Log a meal</button>
-        <button class="chip">What should I eat?</button>
-        <button class="chip">Log manually</button>
-        <button class="chip">My targets</button>
-      </div>
-      <div class="chat-input">
-        <div class="chat-input__icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-        </div>
-        <div class="chat-input__field">Ask a question or log a meal...</div>
-        <button class="chat-input__send">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
-        </button>
-      </div>
+    <!--
+      TEMPORARY PLACEHOLDER — chat input removed pending backend integration.
+      The full chat input (text field, send button, camera, quick chips) was removed
+      because the iOS keyboard wouldn't dismiss reliably after sending.
+      When Claude API is wired during backend sprint, restore the input with:
+      - react-native-keyboard-controller for proper keyboard handling
+      - Real send button calling the AI API
+      - Real chip actions (Log a meal, etc.)
+      See KEYBOARD_ISSUE.md in repo root for handoff context.
+    -->
+    <div class="chat-placeholder-strip">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span>Chat input coming with the next update</span>
     </div>`;
 }
 
@@ -2030,20 +2460,14 @@ function renderLogTab() {
 
   const mealRow = (slot, label) => {
     const m = meals[slot];
-    if (!m) return `
-      <div class="meal-slot">
-        <div class="meal-slot__info">
-          <div class="meal-slot__name" style="color: var(--color-text-secondary); font-weight: 400;">${label}</div>
-          <div class="meal-slot__macros">Not logged yet</div>
-        </div>
-        <div class="meal-slot__right"><span class="source-badge source-badge--empty">+ Add</span></div>
-      </div>`;
+    if (!m) return ''; // App skips empty meals — only shows what's been logged
     return `
       <div class="meal-slot">
         <div class="meal-slot__info">
-          <div class="meal-slot__name">${label} · ${m.name}</div>
-          <div class="meal-slot__macros">${m.calories} kcal · ${m.protein}g P · ${m.fat}g F · ${m.carbs}g C</div>
+          <div class="meal-slot__name">${label}</div>
+          <div class="meal-slot__desc">${m.name}</div>
         </div>
+        <div class="meal-slot__macros-compact">${m.calories} kcal · ${m.protein}g P</div>
         <div class="meal-slot__right">
           <span class="source-badge ${m.source === 'Saved' ? 'source-badge--saved' : ''}">${m.source}</span>
         </div>
@@ -2053,27 +2477,39 @@ function renderLogTab() {
   return `
     <div style="overflow-y: auto; flex: 1;">
       <section class="section">
-        <div class="section__head"><div class="section-label">Consumed today</div></div>
+        <div class="section__head"><div class="section-label">Consumed Today</div></div>
         <div class="consumed-grid">
-          <div class="consumed-row">
-            <div class="consumed-row__label">Calories</div>
-            <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(c.calories, t.calories)}%"></div></div>
-            <div class="consumed-row__value">${c.calories} / ${t.calories}</div>
+          <div class="consumed-row consumed-row--calories">
+            <div class="consumed-row__main">
+              <div class="consumed-row__label">Calories</div>
+              <div class="consumed-row__sub">${c.calories.toLocaleString()} of ${t.calories.toLocaleString()} kcal</div>
+            </div>
+            <div class="consumed-row__pct">${Math.round(pct(c.calories, t.calories))}%</div>
+            <div class="consumed-row__bar"><div class="consumed-row__bar-fill" style="width:${pct(c.calories, t.calories)}%; background: var(--color-macro-calories);"></div></div>
           </div>
           <div class="consumed-row consumed-row--protein">
-            <div class="consumed-row__label">Protein</div>
-            <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(c.protein, t.protein)}%"></div></div>
-            <div class="consumed-row__value">${c.protein} / ${t.protein}g</div>
+            <div class="consumed-row__main">
+              <div class="consumed-row__label">Protein</div>
+              <div class="consumed-row__sub">${c.protein} of ${t.protein}g</div>
+            </div>
+            <div class="consumed-row__pct">${Math.round(pct(c.protein, t.protein))}%</div>
+            <div class="consumed-row__bar"><div class="consumed-row__bar-fill" style="width:${pct(c.protein, t.protein)}%; background: var(--color-macro-protein);"></div></div>
           </div>
           <div class="consumed-row consumed-row--fat">
-            <div class="consumed-row__label">Fat</div>
-            <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(c.fat, t.fat)}%"></div></div>
-            <div class="consumed-row__value">${c.fat} / ${t.fat}g</div>
+            <div class="consumed-row__main">
+              <div class="consumed-row__label">Fat</div>
+              <div class="consumed-row__sub">${c.fat} of ${t.fat}g</div>
+            </div>
+            <div class="consumed-row__pct">${Math.round(pct(c.fat, t.fat))}%</div>
+            <div class="consumed-row__bar"><div class="consumed-row__bar-fill" style="width:${pct(c.fat, t.fat)}%; background: var(--color-macro-fat);"></div></div>
           </div>
           <div class="consumed-row consumed-row--carbs">
-            <div class="consumed-row__label">Carbs</div>
-            <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct(c.carbs, t.carbs)}%"></div></div>
-            <div class="consumed-row__value">${c.carbs} / ${t.carbs}g</div>
+            <div class="consumed-row__main">
+              <div class="consumed-row__label">Carbs</div>
+              <div class="consumed-row__sub">${c.carbs} of ${t.carbs}g</div>
+            </div>
+            <div class="consumed-row__pct">${Math.round(pct(c.carbs, t.carbs))}%</div>
+            <div class="consumed-row__bar"><div class="consumed-row__bar-fill" style="width:${pct(c.carbs, t.carbs)}%; background: var(--color-macro-carbs);"></div></div>
           </div>
         </div>
       </section>
@@ -2087,7 +2523,7 @@ function renderLogTab() {
       </section>
 
       <section class="section">
-        <div class="section__head"><div class="section-label">Still needed</div></div>
+        <div class="section__head"><div class="section-label">Still Needed</div></div>
         <div class="still-needed">
           <div class="still-needed__item"><div class="still-needed__value">${remaining.calories}</div><div class="still-needed__label">kcal</div></div>
           <div class="still-needed__item"><div class="still-needed__value">${remaining.protein}g</div><div class="still-needed__label">Protein</div></div>
@@ -2097,19 +2533,36 @@ function renderLogTab() {
       </section>
 
       <section class="section">
-        <div class="section__head"><div class="section-label">Suggestions</div></div>
+        <div class="section__head"><div class="section-label">Suggestions for You</div></div>
         ${DATA.suggestions.map(s => `
           <div class="suggestion-card">
             <div class="suggestion-card__head">
               <div class="suggestion-card__name">${s.name}</div>
               <div class="suggestion-card__badge ${s.warn ? 'suggestion-card__badge--warn' : ''}">${s.badge}</div>
             </div>
-            <div class="suggestion-card__impact">
-              <span class="impact-pill"><strong>${s.cal}</strong> kcal</span>
-              <span class="impact-pill"><strong>${s.protein}g</strong> protein</span>
-              <span class="impact-pill"><strong>${s.fat}g</strong> fat</span>
-              <span class="impact-pill"><strong>${s.carbs}g</strong> carbs</span>
+            <div class="suggestion-card__macros">
+              <div class="suggestion-macro-row">
+                <div class="suggestion-macro-row__label">Protein</div>
+                <div class="suggestion-macro-row__bar"><div class="suggestion-macro-row__bar-fill" style="width:${Math.min(100, s.protein * 2)}%; background: var(--color-macro-protein);"></div></div>
+                <div class="suggestion-macro-row__value">+${s.protein}g</div>
+              </div>
+              <div class="suggestion-macro-row">
+                <div class="suggestion-macro-row__label">Fat</div>
+                <div class="suggestion-macro-row__bar"><div class="suggestion-macro-row__bar-fill" style="width:${Math.min(100, s.fat * 3)}%; background: var(--color-macro-fat);"></div></div>
+                <div class="suggestion-macro-row__value">+${s.fat}g</div>
+              </div>
+              <div class="suggestion-macro-row">
+                <div class="suggestion-macro-row__label">Carbs</div>
+                <div class="suggestion-macro-row__bar"><div class="suggestion-macro-row__bar-fill" style="width:${Math.min(100, s.carbs * 1.5)}%; background: var(--color-macro-carbs);"></div></div>
+                <div class="suggestion-macro-row__value">+${s.carbs}g</div>
+              </div>
+              <div class="suggestion-macro-row">
+                <div class="suggestion-macro-row__label">Calories</div>
+                <div class="suggestion-macro-row__bar"><div class="suggestion-macro-row__bar-fill" style="width:${Math.min(100, s.cal / 8)}%; background: var(--color-macro-calories);"></div></div>
+                <div class="suggestion-macro-row__value">+${s.cal}</div>
+              </div>
             </div>
+            <button class="suggestion-card__log">Log this</button>
           </div>`).join('')}
       </section>
     </div>`;
@@ -2121,22 +2574,19 @@ function renderLab() {
     <section class="flex-screen ${state.currentScreen === 'lab' ? 'flex-screen--active' : ''}" data-screen="lab" style="height: 100%;">
       <div class="top-bar">
         <div>
-          <div class="top-bar__greeting">Health data</div>
-          <div class="top-bar__greeting-sub">Blood · InBody · Trends</div>
+          <div class="top-bar__greeting top-bar__greeting--large">Health Data</div>
         </div>
-        <div class="avatar">${DATA.patient.initials}</div>
       </div>
 
       <div class="subtab-bar">
-        <button class="subtab-bar__item ${state.labTab === 'blood' ? 'subtab-bar__item--active' : ''}" data-labtab-switch="blood">Blood markers</button>
+        <button class="subtab-bar__item ${state.labTab === 'blood' ? 'subtab-bar__item--active' : ''}" data-labtab-switch="blood">Blood Markers</button>
         <button class="subtab-bar__item ${state.labTab === 'inbody' ? 'subtab-bar__item--active' : ''}" data-labtab-switch="inbody">InBody</button>
-        <button class="subtab-bar__item ${state.labTab === 'trends' ? 'subtab-bar__item--active' : ''}" data-labtab-switch="trends">Trends</button>
+        <!-- Trends sub-tab removed — trend exploration now lives inside Marker Detail screens, reached by tapping any marker -->
       </div>
 
       <div style="overflow-y: auto; flex: 1; position: relative;">
         ${state.labTab === 'blood' ? renderBloodTab()
-          : state.labTab === 'inbody' ? renderInBodyTab()
-          : renderTrendsTab()}
+          : renderInBodyTab()}
       </div>
     </section>`;
 }
@@ -2167,13 +2617,13 @@ function renderBloodTab() {
 
     <section class="section">
       <div class="section__head">
-        <div class="section-label">Needs attention</div>
+        <div class="section-label">Needs Attention</div>
         <div class="section-label section-label--count">${flagged.length} flagged</div>
       </div>
 
       <div class="flag-grid">
         ${highLow.map(m => `
-          <div class="flag-card flag-card--${m.status}">
+          <div class="flag-card flag-card--${m.status}" data-marker-detail="${m.name.toLowerCase().replace(/ /g, '')}">
             <div class="flag-card__head">
               <span>${m.status === 'high' ? '↑ HIGH' : '↓ LOW'}</span>
             </div>
@@ -2207,8 +2657,12 @@ function renderBloodTab() {
       ${byCategory.map(cat => cat.items.length === 0 ? '' : `
         <div class="marker-category">
           <div class="marker-category__label">${cat.name}</div>
-          ${cat.items.map(m => `
-            <div class="normal-marker">
+          ${cat.items.map(m => {
+            // Generate marker key for navigation (e.g., 'Vitamin D' -> 'vitaminD')
+            const key = m.name === 'Vitamin D' ? 'vitaminD' : m.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const hasDetail = !!DATA.trends[key];
+            return `
+            <div class="normal-marker"${hasDetail ? ` data-marker-detail="${key}" style="cursor: pointer;"` : ''}>
               <div class="normal-marker__bar-wrap" style="position: relative;">
                 <span class="status-dot status-dot--normal"></span>
               </div>
@@ -2217,11 +2671,27 @@ function renderBloodTab() {
                 <div class="normal-marker__bar-dot" style="left:${m.barPct}%"></div>
               </div>
               <div class="normal-marker__value">${m.value}</div>
-            </div>`).join('')}
+            </div>`;
+          }).join('')}
         </div>`).join('')}
     </section>`;
 }
 
+/* ========================================================================
+   InBody Tab — Body Composition Visualization
+   ----------------------------------------------------------------------
+   This tab is one of three sub-tabs inside the Lab screen (Blood / InBody / Trends).
+   It displays the user's most recent InBody body composition scan with:
+   - InBody score (composite metric)
+   - Total weight, body fat %, muscle mass (tappable cards leading to Marker Detail)
+   - Segmental muscle figure (renders a stylized body silhouette with per-limb data)
+   - BMR, Fat Mass, Visceral Fat (read-only metric rows)
+   - "Discuss with AI Nutritionist" CTA at bottom
+
+   The segmental figure is rendered by `segmentalBodySvg(segments)` (line ~1690).
+   The data lives in DATA.inbody.segments — keys: leftArm, rightArm, trunk, leftLeg, rightLeg.
+   Each segment has: kg, pct (% of normal range), status ('normal' | 'lower' | 'higher').
+   ======================================================================== */
 function renderInBodyTab() {
   const bc = DATA.bodyComp;
   const ib = DATA.inbody;
@@ -2242,26 +2712,38 @@ function renderInBodyTab() {
         </div>
         <div class="score-card__value">${ib.score}</div>
       </div>
+    </section>
 
-      <div class="section__head" style="margin-top: 4px;"><div class="section-label">Body composition</div></div>
+    <section class="section">
+      <div class="section__head"><div class="section-label">Segmental Muscle</div></div>
+      <div class="segmental-wrapper">${segmentalBodySvg(ib.segments)}</div>
+      <div class="segmental-legend">
+        <div class="segmental-legend__item"><span class="segmental-legend__swatch segmental-legend__swatch--lower"></span>Lower</div>
+        <div class="segmental-legend__item"><span class="segmental-legend__swatch"></span>Normal</div>
+        <div class="segmental-legend__item"><span class="segmental-legend__swatch segmental-legend__swatch--higher"></span>Higher</div>
+      </div>
+    </section>
 
-      <div class="inbody-stat">
+    <section class="section">
+      <div class="section__head"><div class="section-label">Body Composition</div></div>
+
+      <div class="inbody-stat" data-marker-detail="weight" style="cursor: pointer;">
         <div class="inbody-stat__label">Weight</div>
         <div class="inbody-stat__value">${bc.weight.value}<span class="inbody-stat__value-unit">kg</span></div>
         <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:62%"></div></div>
       </div>
-      <div class="inbody-stat">
-        <div class="inbody-stat__label">Body fat %</div>
+      <div class="inbody-stat" data-marker-detail="bodyFat" style="cursor: pointer;">
+        <div class="inbody-stat__label">Body Fat %</div>
         <div class="inbody-stat__value">${bc.bodyFat.value}<span class="inbody-stat__value-unit">%</span></div>
         <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:70%; background: var(--color-warn);"></div></div>
       </div>
-      <div class="inbody-stat">
-        <div class="inbody-stat__label">Muscle mass</div>
+      <div class="inbody-stat" data-marker-detail="muscleMass" style="cursor: pointer;">
+        <div class="inbody-stat__label">Muscle Mass</div>
         <div class="inbody-stat__value">${bc.muscle.value}<span class="inbody-stat__value-unit">kg</span></div>
         <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:58%"></div></div>
       </div>
       <div class="inbody-stat">
-        <div class="inbody-stat__label">Fat mass</div>
+        <div class="inbody-stat__label">Fat Mass</div>
         <div class="inbody-stat__value">${bc.fatMass.value}<span class="inbody-stat__value-unit">kg</span></div>
         <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:68%; background: var(--color-warn);"></div></div>
       </div>
@@ -2271,19 +2753,9 @@ function renderInBodyTab() {
         <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:54%"></div></div>
       </div>
       <div class="inbody-stat">
-        <div class="inbody-stat__label">Visceral fat</div>
+        <div class="inbody-stat__label">Visceral Fat</div>
         <div class="inbody-stat__value">${bc.visceralFat.value}<span class="inbody-stat__value-unit">level</span></div>
         <div class="inbody-stat__bar"><div class="inbody-stat__bar-fill" style="width:35%"></div></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section__head"><div class="section-label">Segmental muscle</div></div>
-      <div class="segmental-wrapper">${segmentalBodySvg(ib.segments)}</div>
-      <div class="segmental-legend">
-        <div class="segmental-legend__item"><span class="segmental-legend__swatch segmental-legend__swatch--lower"></span>Lower</div>
-        <div class="segmental-legend__item"><span class="segmental-legend__swatch"></span>Normal</div>
-        <div class="segmental-legend__item"><span class="segmental-legend__swatch segmental-legend__swatch--higher"></span>Higher</div>
       </div>
     </section>`;
 }
@@ -2397,6 +2869,282 @@ function renderTrendsDropdownPanel() {
     </div>`;
 }
 
+/* ========================================================================
+   7.5.35 Marker Detail Screen
+   ----------------------------------------------------------------------
+   This is a deep-link screen reachable from:
+   - Tapping any flagged marker on the Lab → Blood tab (Cortisol, Ferritin, LDL)
+   - Tapping any normal marker on the Lab → Blood tab (Vitamin D, B12, etc.)
+   - Tapping any tappable body comp metric on the Lab → InBody tab (Weight, Body Fat %, Muscle Mass)
+
+   It shows:
+   - Current value with status pill
+   - Reference range visualization
+   - Trend chart over time
+   - For body fat %: optional Goal Progress section showing week X of Y
+   - AI nutrition note (Premium feature) — uses the green AI badge avatar
+   - "Discuss with AI Nutritionist" CTA
+   - Treatment plan (only for flagged markers, when one exists)
+   ======================================================================== */
+function renderMarkerDetail() {
+  const key = state.activeMarkerKey;
+  if (!key) return '';
+  const marker = DATA.trends[key];
+  if (!marker) return '';
+
+  const isBodyFat = key === 'bodyFat';
+  const goal = DATA.goal;
+
+  const statusLabel = {
+    high: 'HIGH', low: 'LOW', borderline: 'BORDERLINE',
+    normal: 'NORMAL', ontrack: 'ON TRACK'
+  }[marker.status];
+  const statusClass = marker.status === 'ontrack' ? 'normal' : marker.status;
+  const currentValue = marker.points[marker.points.length - 1].value;
+  const previousValue = marker.points[marker.points.length - 2]?.value;
+  const change = previousValue ? (currentValue - previousValue).toFixed(1) : null;
+
+  return `
+    <section class="screen ${state.currentScreen === 'marker-detail' ? 'screen--active' : ''}" data-screen="marker-detail">
+
+      <div class="back-bar">
+        <button class="back-bar__btn" data-nav="lab">←</button>
+        <div class="back-bar__title">${marker.name}</div>
+      </div>
+
+      <section class="section">
+        <div class="marker-hero">
+          <div class="marker-hero__value">
+            <span class="marker-hero__number">${currentValue}</span>
+            <span class="marker-hero__unit">${marker.unit}</span>
+          </div>
+          <div class="marker-hero__status status-pill status-pill--${statusClass}">${statusLabel}</div>
+        </div>
+        ${change !== null ? `
+          <div class="marker-hero__change">
+            ${change > 0 ? '↑' : '↓'} ${Math.abs(change)} ${marker.unit} since last reading
+          </div>
+        ` : ''}
+        <div class="marker-hero__range">
+          Range: ${marker.range[0]}–${marker.range[1]} ${marker.unit}
+        </div>
+      </section>
+
+      ${isBodyFat ? `
+        <section class="section">
+          <div class="section__head">
+            <div class="section-label">Goal Progress</div>
+            <div class="section-label section-label--count">Week ${goal.week} of ${goal.totalWeeks}</div>
+          </div>
+          <div class="goal-progress-card">
+            <div class="goal-progress-card__head">
+              <div>
+                <div class="goal-progress-card__from-to">${goal.from}% → ${goal.to}%</div>
+                <div class="goal-progress-card__type">${goal.type}</div>
+              </div>
+              <div class="goal-progress-card__pct">${goal.percent.toFixed(0)}%</div>
+            </div>
+            <div class="progress-bar"><div class="progress-bar__fill" style="width:${goal.percent}%"></div></div>
+            <div class="goal-progress-card__note">On track — ${(goal.from - currentValue).toFixed(1)}% lost so far, ${(currentValue - goal.to).toFixed(1)}% to go.</div>
+          </div>
+        </section>
+      ` : ''}
+
+      <section class="section">
+        <div class="section__head">
+          <div class="section-label">Trend</div>
+          ${marker.points.length > 1 ? (() => {
+            const first = marker.points[0].value;
+            const last = marker.points[marker.points.length - 1].value;
+            const delta = (last - first).toFixed(1).replace(/\.0$/, '');
+            const arrow = last < first ? '↓' : last > first ? '↑' : '→';
+            // Green if moving toward improvement based on status:
+            //   high marker going down = good; low marker going up = good; ontrack = always good
+            const isImproving = (marker.status === 'high' && last < first)
+                              || (marker.status === 'low' && last > first)
+                              || (marker.status === 'borderline' && last < first)
+                              || (marker.status === 'ontrack');
+            const colour = isImproving ? 'var(--color-accent)' : 'var(--color-text-secondary)';
+            return `<div class="section-label section-label--count" style="color: ${colour};">${arrow} ${delta > 0 ? '+' : ''}${delta} ${marker.unit} since ${marker.points[0].date}</div>`;
+          })() : ''}
+        </div>
+        ${trendChartSvg(marker)}
+      </section>
+
+      <section class="section">
+        <div class="section__head"><div class="section-label">From Your AI Nutritionist</div></div>
+        <div class="ai-observation">
+          <div class="avatar avatar--ai" style="width: 28px; height: 28px; font-size: 10px;">AI</div>
+          <div class="ai-observation__body">${marker.observation}</div>
+        </div>
+        <button class="cta-secondary" data-nav="nutrition" data-subtab="chat" style="margin-top: 12px;">
+          Discuss with AI Nutritionist
+        </button>
+      </section>
+
+      ${marker.status === 'high' || marker.status === 'low' || marker.status === 'borderline' ? `
+        <section class="section">
+          <div class="section__head">
+            <div class="section-label">Treatment</div>
+            <div class="section-label section-label--count">None Tracked</div>
+          </div>
+          <div class="treatment-empty">
+            No treatment tracked. Mention any prescription to your AI nutritionist and they'll add it.
+          </div>
+        </section>
+      ` : ''}
+
+    </section>`;
+}
+
+/* ========================================================================
+   7.5.36 Upload Flow Screens (Modal style)
+   ----------------------------------------------------------------------
+   Triggered from:
+   - Onboarding screen 9 (InBody upload offer)
+   - Profile → Records → Blood Test History → "Add new"
+   - Profile → Records → InBody Scan History → "Add new"
+
+   Flow shape: modal-style, slides up, X to dismiss, NO step counter.
+
+   Five screens designed:
+   1. Source picker (Take a Photo / Choose a File) — see renderUploadSource
+   2. Camera viewfinder OR file picker (native UI, not designed in this prototype)
+   3. Parsing state ("Reading your report...") — see renderUploadParsing
+   4. Confirmation screen — PAUSED pending doctor review of blood marker categories
+   5. Success state ("Saved X markers") — see renderUploadSuccess
+
+   The confirmation screen (step 4) is intentionally NOT in this prototype
+   because the marker categorization needs clinical review before it can be designed.
+   See: pending doctor review on 6 categories (Nutrients/Hormonal/Metabolic/Kidney&Liver/Lipids/Other),
+   tumour marker placement, and marker-to-category mapping.
+
+   These flows use stubbed parsing — real Claude Vision OCR will be wired during backend sprint.
+   ======================================================================== */
+function renderUploadSource() {
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'upload-source' ? 'screen--active' : ''}" data-screen="upload-source">
+      <div class="modal-header">
+        <div class="modal-header__title">New Blood Test</div>
+        <button class="modal-header__close" data-nav="profile">✕</button>
+      </div>
+
+      <section class="section" style="padding-top: 0;">
+        <div class="upload-intro">
+          <div class="upload-intro__title">How would you like to add it?</div>
+          <div class="upload-intro__sub">We'll extract the values automatically and let you review them.</div>
+        </div>
+
+        <div class="upload-options">
+          <button class="upload-option" data-nav="upload-parsing">
+            <div class="upload-option__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </div>
+            <div class="upload-option__body">
+              <div class="upload-option__title">Take a Photo</div>
+              <div class="upload-option__sub">Snap a printed report</div>
+            </div>
+            <div class="upload-option__chevron">›</div>
+          </button>
+
+          <button class="upload-option" data-nav="upload-parsing">
+            <div class="upload-option__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="upload-option__body">
+              <div class="upload-option__title">Choose a File</div>
+              <div class="upload-option__sub">Upload a digital PDF</div>
+            </div>
+            <div class="upload-option__chevron">›</div>
+          </button>
+        </div>
+      </section>
+    </section>`;
+}
+
+function renderUploadParsing() {
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'upload-parsing' ? 'screen--active' : ''}" data-screen="upload-parsing">
+      <div class="modal-header">
+        <div class="modal-header__title">New Blood Test</div>
+        <button class="modal-header__close" data-nav="profile">✕</button>
+      </div>
+
+      <div class="upload-parsing">
+        <div class="upload-parsing__spinner">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="40" fill="none" stroke="#E8E8E6" stroke-width="4"/>
+            <circle cx="48" cy="48" r="40" fill="none" stroke="#1D9E75" stroke-width="4" stroke-linecap="round" stroke-dasharray="180 251" transform="rotate(-90 48 48)">
+              <animateTransform attributeName="transform" type="rotate" from="-90 48 48" to="270 48 48" dur="1.6s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          <div class="upload-parsing__icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+        </div>
+        <div class="upload-parsing__title">Reading your report</div>
+        <div class="upload-parsing__sub">Extracting marker values and reference ranges. This usually takes about 10 seconds.</div>
+
+        <!-- After parsing completes, would navigate to confirmation screen.
+             Confirmation screen is paused pending doctor review of marker categories.
+             For prototype demo, tapping below jumps to success state. -->
+        <button class="cta-tertiary" data-nav="upload-success" style="margin-top: 24px;">
+          (Demo: Skip to Success)
+        </button>
+      </div>
+
+      <div class="upload-parsing__footer">
+        Privacy: this stays on your device until you save
+      </div>
+    </section>`;
+}
+
+function renderUploadSuccess() {
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'upload-success' ? 'screen--active' : ''}" data-screen="upload-success">
+      <div class="modal-header">
+        <div class="modal-header__title">All Set</div>
+        <button class="modal-header__close" data-nav="profile">✕</button>
+      </div>
+
+      <div class="upload-success">
+        <div class="upload-success__check">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+
+        <div class="upload-success__title">Saved 6 Markers</div>
+        <div class="upload-success__sub">2 flagged for attention. Your AI nutritionist will reference these going forward.</div>
+
+        <div class="upload-success__peek">
+          <div class="upload-success__peek-row">
+            <span class="upload-success__peek-label">Ferritin</span>
+            <span class="upload-success__peek-value upload-success__peek-value--low">18 µg/L · Low</span>
+          </div>
+          <div class="upload-success__peek-row">
+            <span class="upload-success__peek-label">Cortisol</span>
+            <span class="upload-success__peek-value upload-success__peek-value--high">23 µg/dL · High</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="upload-success__footer">
+        <button class="cta-primary" data-nav="lab">View My Lab Data</button>
+        <button class="cta-text" data-nav="profile">Done</button>
+      </div>
+    </section>`;
+}
+
 /* ----- 7.5.4 Profile screen ----- */
 function renderProfile() {
   const p = DATA.patient;
@@ -2406,7 +3154,7 @@ function renderProfile() {
     <section class="screen ${state.currentScreen === 'profile' ? 'screen--active' : ''}" data-screen="profile">
 
       <div class="top-bar">
-        <div><div class="top-bar__greeting">Profile</div></div>
+        <div><div class="top-bar__greeting top-bar__greeting--large">Profile</div></div>
       </div>
 
       <section class="section">
@@ -2421,22 +3169,13 @@ function renderProfile() {
       </section>
 
       <section class="section">
-        <div class="section__head"><div class="section-label">Accent colour</div></div>
-        <div class="accent-picker">
-          ${accents.map((c, i) => `
-            <span class="accent-swatch ${i === 0 ? 'accent-swatch--active' : ''}" style="background: ${c}"></span>
-          `).join('')}
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="section__head"><div class="section-label">Health &amp; goals</div></div>
+        <div class="section__head"><div class="section-label">Health &amp; Goals</div></div>
         <div class="profile-row" data-nav="progress">
-          <div class="profile-row__label">Goal &amp; progress</div>
+          <div class="profile-row__label">Goal &amp; Progress</div>
           <div class="profile-row__right"><span>Week ${p.programWeek}</span>›</div>
         </div>
         <div class="profile-row" data-nav="stub-photos">
-          <div class="profile-row__label">Progress photos</div>
+          <div class="profile-row__label">Progress Photos</div>
           <div class="profile-row__right">›</div>
         </div>
       </section>
@@ -2444,15 +3183,19 @@ function renderProfile() {
       <section class="section">
         <div class="section__head"><div class="section-label">Records</div></div>
         <div class="profile-row" data-nav="stub-food">
-          <div class="profile-row__label">Food library</div>
+          <div class="profile-row__label">Food Library</div>
           <div class="profile-row__right">›</div>
         </div>
-        <div class="profile-row" data-nav="stub-blood-history">
-          <div class="profile-row__label">Blood test history</div>
+        <div class="profile-row" data-nav="upload-source">
+          <div class="profile-row__label">Blood Test History</div>
           <div class="profile-row__right">›</div>
         </div>
-        <div class="profile-row" data-nav="stub-inbody-history">
-          <div class="profile-row__label">InBody scan history</div>
+        <div class="profile-row" data-nav="upload-source">
+          <div class="profile-row__label">InBody Scan History</div>
+          <div class="profile-row__right">›</div>
+        </div>
+        <div class="profile-row" data-nav="stub-supplements-treatments">
+          <div class="profile-row__label">Supplements &amp; Treatments</div>
           <div class="profile-row__right">›</div>
         </div>
       </section>
@@ -2460,7 +3203,7 @@ function renderProfile() {
       <section class="section">
         <div class="section__head"><div class="section-label">Preferences</div></div>
         <div class="profile-row" data-nav="stub-personal">
-          <div class="profile-row__label">Personal details</div>
+          <div class="profile-row__label">Personal Details</div>
           <div class="profile-row__right">›</div>
         </div>
         <div class="profile-row" data-nav="stub-notifications">
@@ -2468,20 +3211,29 @@ function renderProfile() {
           <div class="profile-row__right">›</div>
         </div>
         <div class="profile-row" data-nav="stub-devices">
-          <div class="profile-row__label">Connected devices</div>
+          <div class="profile-row__label">Connected Devices</div>
           <div class="profile-row__right">›</div>
         </div>
       </section>
 
       <section class="section">
-        <div class="section__head"><div class="section-label">Subscription &amp; billing</div></div>
+        <div class="section__head"><div class="section-label">Subscription &amp; Billing</div></div>
         <div class="profile-row" data-nav="billing">
-          <div class="profile-row__label">Plan &amp; billing</div>
+          <div class="profile-row__label">Plan &amp; Billing</div>
           <div class="profile-row__right"><span>${p.plan}</span>›</div>
         </div>
         <div class="profile-row" data-nav="plans">
-          <div class="profile-row__label">Upgrade plan</div>
+          <div class="profile-row__label">Upgrade Plan</div>
           <div class="profile-row__right">›</div>
+        </div>
+      </section>
+
+      <!-- Dev-only Reset Onboarding section — visible only in development builds -->
+      <section class="section">
+        <div class="section__head"><div class="section-label">Developer</div></div>
+        <div class="profile-row" data-nav="onboarding-welcome">
+          <div class="profile-row__label" style="color: var(--color-text-secondary);">Reset Onboarding (Dev)</div>
+          <div class="profile-row__right" style="color: var(--color-text-secondary);">›</div>
         </div>
       </section>
 
@@ -2497,7 +3249,7 @@ function renderProfile() {
     </section>`;
 }
 
-/* ----- 7.5.5 Billing sub-page (Premium + Core toggle) ----- */
+/* ----- 7.5.5 Billing sub-page (Premium + Essentials toggle) ----- */
 function renderBilling() {
   const b = DATA.billing;
   const u = b.coreUsage;
@@ -2511,7 +3263,7 @@ function renderBilling() {
         <div class="back-bar__title">Plan &amp; billing</div>
         <!-- dev-only toggle for auditing Core view -->
         <button class="dev-toggle" style="margin-left: auto;" data-billing-view-toggle>
-          View as ${isPremium ? 'Core' : 'Premium'}
+          View as ${isPremium ? 'Essentials' : 'Premium'}
         </button>
       </div>
 
@@ -2537,7 +3289,7 @@ function renderBilling() {
           <div class="plan-card-billing" style="background: var(--color-bg-secondary);">
             <div class="plan-card-billing__head">
               <div>
-                <div class="plan-card-billing__name" style="color: var(--color-text-primary);">Core</div>
+                <div class="plan-card-billing__name" style="color: var(--color-text-primary);">Essentials</div>
                 <div class="plan-card-billing__renewal" style="color: var(--color-text-secondary); opacity: 1;">Renews ${b.renewalDate}</div>
               </div>
               <div class="plan-card-billing__price" style="color: var(--color-text-primary);">9 KWD/mo</div>
@@ -2663,7 +3415,7 @@ function renderPlans() {
 
           return `
             <div class="plan-card ${cardClass}">
-              ${p.popular ? '<div class="plan-card__badge">Most popular</div>' : ''}
+              ${p.popular ? '<div class="plan-card__badge">Our Recommendation</div>' : ''}
               <div class="plan-card__head">
                 <div class="plan-card__name">${p.name}</div>
                 <div class="plan-card__price-wrap">
@@ -2804,6 +3556,10 @@ function render() {
   else if (s === 'billing') screenMarkup = renderBilling();
   else if (s === 'plans') screenMarkup = renderPlans();
   else if (s === 'progress') screenMarkup = renderProgress();
+  else if (s === 'marker-detail') screenMarkup = renderMarkerDetail();
+  else if (s === 'upload-source') screenMarkup = renderUploadSource();
+  else if (s === 'upload-parsing') screenMarkup = renderUploadParsing();
+  else if (s === 'upload-success') screenMarkup = renderUploadSuccess();
   else if (s === 'stub-photos') screenMarkup = renderStub('stub-photos', 'Progress photos', 'This screen is stubbed pending a dedicated design session. The final design will cover upload cadence, compare views, and privacy controls.');
   else if (s === 'stub-food') screenMarkup = renderStub('stub-food', 'Food library', 'This screen is stubbed pending a dedicated design session. Open questions: saved meals vs. Kuwait food database, search, custom recipes.');
   else if (s === 'stub-blood-history') screenMarkup = renderStub('stub-blood-history', 'Blood test history', 'This is also the upload entry point for blood tests. User can photograph a printed report or pick a digital PDF. After parsing, a mandatory confirmation screen shows extracted values in editable fields. Needs design for: upload flow, parsing progress, confirmation screen, history archive, and per-draw summary views.');
@@ -2811,6 +3567,7 @@ function render() {
   else if (s === 'stub-personal') screenMarkup = renderStub('stub-personal', 'Personal details', 'This screen is stubbed pending a dedicated design session. Needs design for editable profile fields and medical disclosures.');
   else if (s === 'stub-notifications') screenMarkup = renderStub('stub-notifications', 'Notifications', 'This screen is stubbed pending a dedicated design session. Needs product decisions on notification categories and per-category toggles.');
   else if (s === 'stub-devices') screenMarkup = renderStub('stub-devices', 'Connected devices', 'This screen is stubbed pending a dedicated design session. Needs decisions on supported integrations (Apple Health, Google Fit, Oura, Garmin, etc.).');
+  else if (s === 'stub-supplements-treatments') screenMarkup = renderStub('stub-supplements-treatments', 'Supplements & Treatments', 'List of supplements and treatments not tied to a flagged marker. Pending design — see also Marker Detail Treatment section.');
 
   content.innerHTML = screenMarkup;
   nav.innerHTML = renderBottomNav();
@@ -2824,7 +3581,7 @@ function render() {
 // One listener on app root handles every interaction. Keeps the code audit-friendly
 // and means adding a new navigable element is just adding a data-attribute.
 document.getElementById('app').addEventListener('click', (e) => {
-  const target = e.target.closest('[data-nav], [data-subtab-switch], [data-labtab-switch], [data-trends-dropdown], [data-trend-select], [data-cycle], [data-water-add], [data-billing-view-toggle]');
+  const target = e.target.closest('[data-nav], [data-subtab-switch], [data-labtab-switch], [data-trends-dropdown], [data-trend-select], [data-cycle], [data-water-add], [data-billing-view-toggle], [data-marker-detail]');
   if (!target) {
     // Click outside of dropdown closes it
     if (state.trendsDropdownOpen && !e.target.closest('.trends-dropdown-panel')) {
@@ -2839,6 +3596,14 @@ document.getElementById('app').addEventListener('click', (e) => {
     state.currentScreen = target.dataset.nav;
     if (target.dataset.subtab) state.nutritionTab = target.dataset.subtab;
     state.trendsDropdownOpen = false;
+    render();
+    return;
+  }
+
+  // Marker detail navigation (deep-link to marker detail screen)
+  if (target.dataset.markerDetail) {
+    state.activeMarkerKey = target.dataset.markerDetail;
+    state.currentScreen = 'marker-detail';
     render();
     return;
   }

@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>MRN — Onboarding Flow Prototype</title>
+<!--
+  MRN Onboarding Flow Prototype
+  Companion to mrn.html — covers ONLY the 19-screen onboarding flow
+  that runs once for a new user before they reach the main app.
+
+  ONBOARDING PHASES:
+    Phase 1 — Welcome (2 screens): brand intro + setup expectations
+    Phase 2 — Basics (7 screens): DOB, sex, height, weight, activity, body fat, InBody upload offer
+    Phase 3 — Dietary (4 screens): restrictions, allergies, meals/day, supplements
+    Phase 4 — Medical (3 screens): privacy disclaimer, conditions, pregnancy (female only)
+    Phase 5 — Goal/Plan (3 screens): AI intro, goal conversation, plan selection
+
+  KEY ROUTING LOGIC:
+    - Pregnancy screen (16) is SKIPPED entirely if sex === 'male' (counter shows X of 18)
+    - "Skip this section" on screen 14 bypasses screens 15-16, jumps directly to 17
+    - Resumes from where user left off via AsyncStorage (in React Native app)
+    - "I already have an account" on screen 1 → marks complete → lands on Home
+
+  All design tokens match mrn.html exactly so the look-and-feel is consistent.
+  Each screen has a brief design intent comment describing what's happening.
+-->
+<style>
+  :root {
+    --color-accent: #1D9E75;
+    --color-accent-light: #E1F5EE;
+    --color-accent-dark: #085041;
+    --color-text-primary: #1A1A18;
+    --color-text-secondary: #888780;
+    --color-bg-primary: #FFFFFF;
+    --color-bg-secondary: #F5F5F3;
+    --color-border-tertiary: #E8E8E6;
+    --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    --space-section-x: 22px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--font-system);
+    color: var(--color-text-primary);
+    background: #CFCFCB;
+    line-height: 1.4;
+    padding: 30px;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  svg { display: block; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
+    gap: 30px;
+    max-width: 2000px;
+    margin: 0 auto;
+  }
+  .screen-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .screen-label {
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 4px 12px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 6px;
+    align-self: flex-start;
+  }
+  .design-note {
+    color: rgba(255,255,255,0.85);
+    font-size: 11px;
+    line-height: 1.4;
+    margin-top: 4px;
+  }
+  .phone-frame {
+    width: 390px;
+    height: 844px;
+    background: var(--color-bg-primary);
+    border-radius: 44px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px -20px rgba(0,0,0,0.35), 0 0 0 10px #1A1A18;
+    position: relative;
+  }
+  .app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-primary);
+    padding: 24px var(--space-section-x);
+  }
+  .ob-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .ob-back { font-size: 18px; color: var(--color-text-secondary); }
+  .ob-step {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.04em;
+    margin-left: auto;
+    margin-right: 16px;
+  }
+  .ob-progress {
+    display: flex;
+    gap: 3px;
+    flex: 1;
+    max-width: 140px;
+  }
+  .ob-progress__seg {
+    height: 3px;
+    flex: 1;
+    background: var(--color-border-tertiary);
+    border-radius: 999px;
+  }
+  .ob-progress__seg--filled { background: var(--color-accent); }
+  .ob-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--color-accent-light);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .ob-headline {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.25;
+    margin-bottom: 12px;
+  }
+  .ob-headline--lg {
+    font-size: 28px;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .ob-sub {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: 32px;
+  }
+  .ob-footer { margin-top: auto; }
+  .ob-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .ob-secondary {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .ob-option {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: white;
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 12px;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .ob-option--selected {
+    background: var(--color-accent-light);
+    border-color: var(--color-accent);
+    color: var(--color-accent-dark);
+  }
+  .ob-option__title { font-size: 15px; font-weight: 500; }
+  .ob-option__desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; }
+  .ob-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .ob-chip {
+    padding: 8px 14px;
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 999px;
+    font-size: 13px;
+    background: white;
+    color: var(--color-text-primary);
+  }
+  .ob-chip--selected {
+    background: var(--color-accent-light);
+    border-color: var(--color-accent);
+    color: var(--color-accent-dark);
+    font-weight: 500;
+  }
+  .ob-chip--dashed { border-style: dashed; }
+  .ob-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+  }
+  .ob-input--focus { border-color: var(--color-accent); }
+  .ob-toggle {
+    display: inline-flex;
+    padding: 4px;
+    background: var(--color-bg-secondary);
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .ob-toggle__opt {
+    padding: 6px 18px;
+    font-size: 13px;
+    border-radius: 999px;
+    color: var(--color-text-secondary);
+  }
+  .ob-toggle__opt--active {
+    background: white;
+    color: var(--color-text-primary);
+    font-weight: 500;
+  }
+  .brand-block { text-align: center; margin-top: 40px; margin-bottom: 60px; }
+  .brand-mark {
+    font-size: 40px;
+    font-weight: 500;
+    color: var(--color-accent);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .brand-mark-arabic {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin-top: 4px;
+    font-family: 'Geeza Pro', 'Damascus', 'Al Bayan', 'Amiri', serif;
+  }
+  .promise-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+  }
+  .promise-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--color-accent-light);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .promise-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+  .promise-desc { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+  .ob-tiles { display: flex; gap: 10px; margin-bottom: 24px; }
+  .ob-tile {
+    flex: 1;
+    padding: 24px 12px;
+    background: white;
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 12px;
+    text-align: center;
+  }
+  .ob-tile--selected {
+    background: var(--color-accent-light);
+    border-color: var(--color-accent);
+  }
+  .ob-tile__num {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .ob-tile--selected .ob-tile__num { color: var(--color-accent-dark); }
+  .ob-tile__desc { font-size: 11px; color: var(--color-text-secondary); }
+  .promise-card {
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+  .promise-card__row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .promise-card__row:last-child { margin-bottom: 0; }
+  .promise-card__check { color: var(--color-accent); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .promise-card__text { font-size: 13px; line-height: 1.5; }
+  .plan-card {
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 12px;
+    background: white;
+    border: 1px solid var(--color-border-tertiary);
+    position: relative;
+  }
+  .plan-card--recommended { border: 1.5px solid var(--color-accent); }
+  .plan-card__badge {
+    position: absolute;
+    top: -10px;
+    left: 18px;
+    background: var(--color-accent);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .plan-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .plan-card__name { font-size: 16px; font-weight: 500; }
+  .plan-card__price { font-size: 18px; font-weight: 500; }
+  .plan-card__price-suffix { font-size: 11px; color: var(--color-text-secondary); }
+  .plan-card__desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 14px; }
+  .plan-card--recommended .plan-card__desc { color: var(--color-text-primary); }
+  .plan-card__cta {
+    width: 100%;
+    padding: 11px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .plan-card__cta--primary { background: var(--color-accent); color: white; }
+  .plan-card__cta--secondary { background: white; border: 1px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+  .ai-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: white;
+    font-size: 24px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 32px auto 28px;
+  }
+  .ai-bubble-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+  }
+  .ai-avatar-small {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .ai-bubble {
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+    padding: 10px 14px;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 240px;
+  }
+  .user-bubble {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    padding: 10px 14px;
+    border-radius: 14px;
+    border-bottom-right-radius: 4px;
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 240px;
+    align-self: flex-end;
+    margin-left: auto;
+    margin-bottom: 12px;
+  }
+  .proposed-plan-card {
+    border: 1px solid var(--color-accent);
+    border-radius: 14px;
+    padding: 16px;
+    margin-left: 38px;
+    margin-bottom: 10px;
+    background: white;
+  }
+  .proposed-plan-card__label {
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    color: var(--color-accent-dark);
+    font-weight: 500;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .proposed-plan-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 13px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .proposed-plan-row:last-child { border-bottom: none; }
+  .proposed-plan-row__label { color: var(--color-text-secondary); }
+  .proposed-plan-row__value { font-weight: 500; }
+  .proposed-plan-ctas {
+    display: flex;
+    gap: 8px;
+    margin-left: 38px;
+    margin-top: 10px;
+  }
+  .proposed-plan-cta {
+    flex: 1;
+    padding: 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .goal-hint {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin-bottom: 8px;
+    padding-left: 4px;
+  }
+  .goal-input-bar {
+    display: flex;
+    align-items: center;
+    background: var(--color-bg-secondary);
+    border-radius: 999px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .goal-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    outline: none;
+  }
+  .goal-send {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .upload-card {
+    width: 100%;
+    padding: 14px;
+    background: white;
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .upload-card__icon {
+    width: 36px;
+    height: 36px;
+    background: var(--color-bg-secondary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .upload-card__title { font-size: 14px; font-weight: 500; }
+  .upload-card__desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div style="text-align: center; color: white; margin-bottom: 30px;">
+  <h1 style="font-size: 22px; font-weight: 500;">MRN — Onboarding Flow Prototype</h1>
+  <p style="font-size: 13px; opacity: 0.7; margin-top: 4px;">19 screens · Companion to mrn.html · 5 phases</p>
+</div>
+
+<div class="grid">
+
+<!-- Phase 1 - Welcome (2 screens) -->
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 1 · Welcome</div>
+  <div class="design-note">Brand-forward entry. "I already have an account" bypasses onboarding.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="brand-block">
+      <div class="brand-mark">MRN</div>
+      <div class="brand-mark-arabic">مرن</div>
+    </div>
+    <div style="text-align: center;">
+      <div class="ob-headline ob-headline--lg" style="max-width: 280px; margin-left: auto; margin-right: auto;">Health Intelligence, Made for You.</div>
+      <div class="ob-sub" style="max-width: 280px; margin-left: auto; margin-right: auto;">An AI nutritionist that learns from your blood work, body composition, and daily habits.</div>
+    </div>
+    <div class="ob-footer">
+      <button class="ob-primary">Get Started</button>
+      <button class="ob-secondary" style="color: var(--color-text-primary);">I already have an account</button>
+    </div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 2 · What to Expect</div>
+  <div class="design-note">Sets expectations: 4-5 minutes, why we ask, your data is yours.</div>
+  <div class="phone-frame"><div class="app">
+    <div style="display: flex; align-items: center; margin-bottom: 24px;"><button class="ob-back">←</button></div>
+    <div class="ob-headline" style="margin-bottom: 32px;">Let's get to know you.</div>
+    <div class="promise-row">
+      <div class="promise-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div><div class="promise-title">A few questions</div><div class="promise-desc">About your basics, your eating habits, and your goals. Takes 4–5 minutes.</div></div>
+    </div>
+    <div class="promise-row">
+      <div class="promise-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
+      <div><div class="promise-title">Why we ask</div><div class="promise-desc">Each answer helps your AI nutritionist personalize your guidance from day one.</div></div>
+    </div>
+    <div class="promise-row">
+      <div class="promise-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <div><div class="promise-title">Your data is yours</div><div class="promise-desc">Encrypted, never sold, never shared. You can delete it anytime.</div></div>
+    </div>
+    <div class="ob-footer"><button class="ob-primary">Let's begin</button></div>
+  </div></div>
+</div>
+
+<!-- Phase 2 - Basics (7 screens) -->
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 3 · Date of Birth</div>
+  <div class="design-note">First Basics screen. Native date picker. No back arrow.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <div></div><div class="ob-step">3 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+    <div class="ob-headline">When were you born?</div>
+    <div class="ob-sub">Age helps set realistic targets and adjusts your daily calorie needs.</div>
+    <input type="text" class="ob-input" placeholder="DD / MM / YYYY" />
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 4 · Sex</div>
+  <div class="design-note">Female / Male only. Drives whether pregnancy screen 16 shows.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">4 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div class="ob-headline">What's your sex?</div>
+    <div class="ob-sub">Your body's nutritional and metabolic needs differ between sexes.</div>
+    <button class="ob-option ob-option--selected">Female</button>
+    <button class="ob-option">Male</button>
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 5 · Height</div>
+  <div class="design-note">cm/ft toggle. Internal storage in cm.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">5 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg></div>
+    <div class="ob-headline">How tall are you?</div>
+    <div class="ob-sub">We use this with your weight to estimate body composition.</div>
+    <div class="ob-toggle"><div class="ob-toggle__opt ob-toggle__opt--active">cm</div><div class="ob-toggle__opt">ft</div></div>
+    <div style="position: relative;">
+      <input type="text" class="ob-input ob-input--focus" value="165" />
+      <span style="position: absolute; right: 16px; top: 14px; font-size: 14px; color: var(--color-text-secondary);">cm</span>
+    </div>
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 6 · Weight</div>
+  <div class="design-note">kg/lb toggle. "Just so we know where you're starting from" — non-judgmental copy.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">6 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+    <div class="ob-headline">What's your current weight?</div>
+    <div class="ob-sub">Just so we know where you're starting from.</div>
+    <div class="ob-toggle"><div class="ob-toggle__opt ob-toggle__opt--active">kg</div><div class="ob-toggle__opt">lb</div></div>
+    <div style="position: relative;">
+      <input type="text" class="ob-input ob-input--focus" value="71" />
+      <span style="position: absolute; right: 16px; top: 14px; font-size: 14px; color: var(--color-text-secondary);">kg</span>
+    </div>
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 7 · Activity Level</div>
+  <div class="design-note">4 options with descriptions. Sets daily calorie target.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">7 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4v16m-7-9h14"/></svg></div>
+    <div class="ob-headline">How active are you?</div>
+    <div class="ob-sub">Sets your daily calorie target.</div>
+    <button class="ob-option"><div class="ob-option__title">Sedentary</div><div class="ob-option__desc">Desk job, little to no exercise</div></button>
+    <button class="ob-option ob-option--selected"><div class="ob-option__title">Lightly Active</div><div class="ob-option__desc">Light walks or exercise 1–2 days a week</div></button>
+    <button class="ob-option"><div class="ob-option__title">Moderately Active</div><div class="ob-option__desc">Exercise 3–4 days a week</div></button>
+    <button class="ob-option"><div class="ob-option__title">Very Active</div><div class="ob-option__desc">Exercise 5+ days a week</div></button>
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 8 · Body Fat % (optional)</div>
+  <div class="design-note">Optional input. "I don't know — estimate it" falls back to AI estimation.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">8 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="#1D9E75"/></svg></div>
+    <div class="ob-headline">Do you know your body fat %?</div>
+    <div class="ob-sub">Optional. If you've had an InBody or DEXA scan recently, enter it. If not, we'll estimate.</div>
+    <div style="position: relative;">
+      <input type="text" class="ob-input" placeholder="Enter %" />
+      <span style="position: absolute; right: 16px; top: 14px; font-size: 14px; color: var(--color-text-secondary);">%</span>
+    </div>
+    <button class="ob-secondary" style="text-align: center; margin-top: 8px;">I don't know — estimate it</button>
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 9 · InBody Upload Offer</div>
+  <div class="design-note">Two upload cards as primary actions. Triggers actual upload flow (in mrn.html). "Maybe later" as quiet secondary.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">9 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+    <div class="ob-headline">Have an InBody scan handy?</div>
+    <div class="ob-sub">Upload it now for precise body composition data. Takes about 30 seconds.</div>
+    <button class="upload-card" style="margin-bottom: 10px;">
+      <div class="upload-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+      <div style="text-align: left;"><div class="upload-card__title">Take a Photo</div><div class="upload-card__desc">Snap your printed report</div></div>
+    </button>
+    <button class="upload-card">
+      <div class="upload-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div style="text-align: left;"><div class="upload-card__title">Choose a File</div><div class="upload-card__desc">Pick a digital PDF</div></div>
+    </button>
+    <div class="ob-footer"><button class="ob-secondary" style="text-align: center;">Maybe later</button></div>
+  </div></div>
+</div>
+
+<!-- Phase 3 - Dietary (4 screens) -->
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 10 · Dietary Restrictions</div>
+  <div class="design-note">Multi-select chips. "None" mutually exclusive. Halal listed for GCC market.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">10 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="#1D9E75"/></svg></div>
+    <div class="ob-headline">Any dietary restrictions?</div>
+    <div class="ob-sub">Select all that apply. Your AI nutritionist will work around them.</div>
+    <div class="ob-chips">
+      <button class="ob-chip">Vegetarian</button>
+      <button class="ob-chip">Vegan</button>
+      <button class="ob-chip">Pescatarian</button>
+      <button class="ob-chip ob-chip--selected">Halal ✓</button>
+      <button class="ob-chip">Gluten-Free</button>
+      <button class="ob-chip">Dairy-Free</button>
+      <button class="ob-chip">Keto</button>
+      <button class="ob-chip" style="color: var(--color-text-secondary);">None</button>
+    </div>
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 11 · Allergies</div>
+  <div class="design-note">Multi-select chips with "+ Other" expansion. "None" mutually exclusive.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">11 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
+    <div class="ob-headline">Any allergies or foods to avoid?</div>
+    <div class="ob-sub">Select any that apply. Your AI nutritionist will keep these out of your food.</div>
+    <div class="ob-chips">
+      <button class="ob-chip">Peanuts</button>
+      <button class="ob-chip ob-chip--selected">Shellfish ✓</button>
+      <button class="ob-chip">Eggs</button>
+      <button class="ob-chip">Soy</button>
+      <button class="ob-chip">Wheat</button>
+      <button class="ob-chip">Dairy</button>
+      <button class="ob-chip ob-chip--dashed">+ Other</button>
+      <button class="ob-chip" style="color: var(--color-text-secondary);">None</button>
+    </div>
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 12 · Meals per Day</div>
+  <div class="design-note">3 single-select tiles. "3" preselected as default.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">12 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/></svg></div>
+    <div class="ob-headline">How many meals a day?</div>
+    <div class="ob-sub">Helps spread your daily targets across the right number of meals.</div>
+    <div class="ob-tiles">
+      <div class="ob-tile"><div class="ob-tile__num">2</div><div class="ob-tile__desc">Skip a meal</div></div>
+      <div class="ob-tile ob-tile--selected"><div class="ob-tile__num">3</div><div class="ob-tile__desc">Standard</div></div>
+      <div class="ob-tile"><div class="ob-tile__num">4+</div><div class="ob-tile__desc">With snacks</div></div>
+    </div>
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 13 · Supplements</div>
+  <div class="design-note">Multi-select chips. Tells AI what user is already taking.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">13 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 13.5l-3 3a2.121 2.121 0 0 1-3-3l8-8a2.121 2.121 0 0 1 3 3l-3 3"/><line x1="9" y1="15" x2="15" y2="9"/></svg></div>
+    <div class="ob-headline">Taking any supplements?</div>
+    <div class="ob-sub">Helps your AI nutritionist see what you're already covering.</div>
+    <div class="ob-chips">
+      <button class="ob-chip">Multivitamin</button>
+      <button class="ob-chip ob-chip--selected">Vitamin D ✓</button>
+      <button class="ob-chip">Vitamin B12</button>
+      <button class="ob-chip">Iron</button>
+      <button class="ob-chip">Magnesium</button>
+      <button class="ob-chip ob-chip--selected">Omega-3 ✓</button>
+      <button class="ob-chip">Protein Powder</button>
+      <button class="ob-chip">Creatine</button>
+      <button class="ob-chip">Probiotic</button>
+      <button class="ob-chip ob-chip--dashed">+ Other</button>
+      <button class="ob-chip" style="color: var(--color-text-secondary);">None</button>
+    </div>
+    <div class="ob-footer"><button class="ob-primary">Continue</button></div>
+  </div></div>
+</div>
+
+<!-- Phase 4 - Medical (3 screens) -->
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 14 · Privacy Disclaimer</div>
+  <div class="design-note">"Skip this section" bypasses screens 15-16 entirely.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">14 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <div class="ob-headline">A few medical questions next.</div>
+    <div class="ob-sub">These help your AI nutritionist work safely around any conditions you're managing.</div>
+    <div class="promise-card">
+      <div class="promise-card__row"><div class="promise-card__check">✓</div><div class="promise-card__text"><strong>Encrypted and private.</strong> Never sold. Never shared.</div></div>
+      <div class="promise-card__row"><div class="promise-card__check">✓</div><div class="promise-card__text"><strong>Only used for your guidance.</strong> Your AI nutritionist references this when relevant.</div></div>
+      <div class="promise-card__row"><div class="promise-card__check">✓</div><div class="promise-card__text"><strong>Skip anything you'd rather not answer.</strong> Each question is optional.</div></div>
+    </div>
+    <div class="ob-footer">
+      <button class="ob-primary">Continue</button>
+      <button class="ob-secondary">Skip this section</button>
+    </div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 15 · Conditions</div>
+  <div class="design-note">Diagnosed conditions multi-select. "Skip this question" available.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">15 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    <div class="ob-headline">Any diagnosed conditions?</div>
+    <div class="ob-sub">Your AI nutritionist will work safely around them.</div>
+    <div class="ob-chips">
+      <button class="ob-chip">Diabetes</button>
+      <button class="ob-chip">PCOS</button>
+      <button class="ob-chip">Thyroid Disorder</button>
+      <button class="ob-chip">Anemia</button>
+      <button class="ob-chip">Hypertension</button>
+      <button class="ob-chip">High Cholesterol</button>
+      <button class="ob-chip">IBS</button>
+      <button class="ob-chip ob-chip--dashed">+ Other</button>
+      <button class="ob-chip ob-chip--selected">None ✓</button>
+    </div>
+    <div class="ob-footer">
+      <button class="ob-primary">Continue</button>
+      <button class="ob-secondary">Skip this question</button>
+    </div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 16 · Pregnancy (Female only)</div>
+  <div class="design-note">SKIPPED for male users — counter shows X of 18 instead of 19. "Trying to conceive" intentionally dropped.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">16 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div class="ob-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    <div class="ob-headline">Are you pregnant or breastfeeding?</div>
+    <div class="ob-sub">Calorie and nutrient needs change significantly during these times.</div>
+    <button class="ob-option ob-option--selected">No</button>
+    <button class="ob-option">Pregnant</button>
+    <button class="ob-option">Breastfeeding</button>
+    <div class="ob-footer">
+      <button class="ob-primary">Continue</button>
+      <button class="ob-secondary">Skip this question</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- Phase 5 - Goal/Plan (3 screens) -->
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 17 · AI Introduction</div>
+  <div class="design-note">First time user meets the AI. Hero AI avatar (80px). Greets with first name.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">17 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div style="text-align: center;">
+      <div class="ai-avatar-large">AI</div>
+      <div class="ob-headline" style="max-width: 280px; margin-left: auto; margin-right: auto;">Hi Sarah. I'm your AI nutritionist.</div>
+      <div class="ob-sub" style="max-width: 290px; margin-left: auto; margin-right: auto;">Tell me what you want to achieve. I'll turn it into a plan rooted in your real data.</div>
+    </div>
+    <div class="ob-footer"><button class="ob-primary">Let's set my goal</button></div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 18 · Goal Conversation</div>
+  <div class="design-note">Chat-style. AI prompts, user picks chip OR types free-text. Chip "I have a wedding coming up" signals AI handles informal language. AI responds with science + structured Proposed Plan card.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">18 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg"></div></div>
+    </div>
+    <div style="flex: 1; overflow-y: auto;">
+      <div class="ai-bubble-row">
+        <div class="ai-avatar-small">AI</div>
+        <div class="ai-bubble">What would you like to work on?</div>
+      </div>
+      <div style="margin-left: 36px;">
+        <div class="ob-chips">
+          <button class="ob-chip">Lose weight</button>
+          <button class="ob-chip ob-chip--selected">Reduce body fat ✓</button>
+          <button class="ob-chip">Build muscle</button>
+          <button class="ob-chip">Visible abs</button>
+          <button class="ob-chip">Eat healthier</button>
+          <button class="ob-chip">I have a wedding coming up</button>
+        </div>
+      </div>
+      <div class="user-bubble">Reduce body fat</div>
+      <div class="ai-bubble-row">
+        <div class="ai-avatar-small">AI</div>
+        <div class="ai-bubble">From your stats I'd estimate you're around 28% body fat. A realistic 16-week target would be 23%. That's about 0.3% per week — sustainable, no extreme deficits.</div>
+      </div>
+      <div class="proposed-plan-card">
+        <div class="proposed-plan-card__label">Your Proposed Plan</div>
+        <div class="proposed-plan-row"><span class="proposed-plan-row__label">Goal</span><span class="proposed-plan-row__value">23% body fat</span></div>
+        <div class="proposed-plan-row"><span class="proposed-plan-row__label">Timeframe</span><span class="proposed-plan-row__value">16 weeks</span></div>
+        <div class="proposed-plan-row"><span class="proposed-plan-row__label">Daily target</span><span class="proposed-plan-row__value">1,750 kcal · 110g protein</span></div>
+      </div>
+      <div class="proposed-plan-ctas">
+        <button class="proposed-plan-cta" style="background: var(--color-accent); color: white;">Sounds good</button>
+        <button class="proposed-plan-cta" style="background: white; border: 1px solid var(--color-border-tertiary); color: var(--color-text-primary);">Adjust</button>
+      </div>
+    </div>
+    <div style="border-top: 0.5px solid var(--color-border-tertiary); padding-top: 14px; margin-top: 14px;">
+      <div class="goal-hint">Or describe it however feels natural — e.g. "fit my old jeans", "feel less tired", "be ready for summer"...</div>
+      <div class="goal-input-bar">
+        <input class="goal-input" placeholder="Type your goal..." />
+        <button class="goal-send"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<div class="screen-wrap">
+  <div class="screen-label">Screen 19 · Plan Selection</div>
+  <div class="design-note">Both tiers neutral CTAs. Premium gets "Our Recommendation" badge. Locked pricing: 9 KWD / 18 KWD.</div>
+  <div class="phone-frame"><div class="app">
+    <div class="ob-header">
+      <button class="ob-back">←</button><div class="ob-step">19 of 19</div>
+      <div class="ob-progress"><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div><div class="ob-progress__seg ob-progress__seg--filled"></div></div>
+    </div>
+    <div class="ob-headline" style="margin-bottom: 8px;">Choose your plan</div>
+    <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 24px; line-height: 1.5;">7 days free, then your subscription starts. Cancel anytime.</div>
+    <div class="plan-card">
+      <div class="plan-card__head">
+        <div class="plan-card__name">Essentials</div>
+        <div class="plan-card__price">9 KWD<span class="plan-card__price-suffix">/mo</span></div>
+      </div>
+      <div class="plan-card__desc">15 AI messages/day · 1 of each upload · 30-day trends</div>
+      <button class="plan-card__cta plan-card__cta--secondary">Choose Essentials</button>
+    </div>
+    <div class="plan-card plan-card--recommended">
+      <div class="plan-card__badge">Our Recommendation</div>
+      <div class="plan-card__head" style="margin-top: 6px;">
+        <div class="plan-card__name">Premium</div>
+        <div class="plan-card__price">18 KWD<span class="plan-card__price-suffix">/mo</span></div>
+      </div>
+      <div class="plan-card__desc">Unlimited AI · unlimited uploads · Sunday review · treatment tracking · weekly meal plans</div>
+      <button class="plan-card__cta plan-card__cta--primary">Choose Premium</button>
+    </div>
+    <div style="font-size: 11px; color: var(--color-text-secondary); text-align: center; line-height: 1.5; margin-top: 20px;">
+      7-day free trial. Cancel anytime. Prices in Kuwaiti Dinar.
+    </div>
+  </div></div>
+</div>
+
+</div>
+
+</body>
+</html>
