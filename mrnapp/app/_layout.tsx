@@ -35,6 +35,7 @@ export default function RootLayout() {
           <Stack.Screen name="profile/plans" />
           <Stack.Screen name="profile/progress-photos" />
           <Stack.Screen name="profile/supplements" />
+          <Stack.Screen name="profile/supplements-medications" />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: true }} />
         </Stack>
         <StatusBar style="auto" />

@@ -28,7 +28,7 @@ const RECORDS_ROWS: RowDef[] = [
   { label: 'Food Library', path: '/profile/food-library' },
   { label: 'Blood Test History', path: '/profile/blood-test-history' },
   { label: 'InBody Scan History', path: '/profile/inbody-scan-history' },
-  { label: 'Supplements & Treatments', path: '/profile/supplements' },
+  { label: 'Supplements and Medications', path: '/profile/supplements-medications' },
 ];
 
 const PREFERENCES_ROWS: RowDef[] = [

@@ -13,6 +13,9 @@ export { useTrends } from './useTrends';
 export { useBilling } from './useBilling';
 export { usePlans } from './usePlans';
 
+export { useSupplements } from './useSupplements';
+
 export type { MealSuggestion } from './useSuggestions';
 export type { ChatMessage } from './useChat';
 export type { TrendPoint } from './useTrends';
+export type { SupplementEntry } from './useSupplements';
