@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Section from '../components/home/Section';
@@ -71,8 +71,21 @@ export default function ProfileScreen() {
   };
 
   const onResetOnboarding = () => {
-    resetOnboarding();
-    router.replace('/onboarding');
+    Alert.alert(
+      'Reset onboarding state?',
+      'This will sign you out and restart the onboarding flow.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            resetOnboarding();
+            router.replace('/onboarding');
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -109,18 +122,16 @@ export default function ProfileScreen() {
           phone={CLINIC_PHONE}
         />
 
-        {__DEV__ ? (
-          <Pressable
-            onPress={onResetOnboarding}
-            style={({ pressed }) => [styles.devReset, pressed && { opacity: 0.6 }]}>
-            <Text style={styles.devResetText}>Reset Onboarding (Dev)</Text>
-          </Pressable>
-        ) : null}
-
         <Pressable
           onPress={onSignOut}
           style={({ pressed }) => [styles.signOut, pressed && { opacity: 0.6 }]}>
           <Text style={styles.signOutText}>Sign Out</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={onResetOnboarding}
+          style={({ pressed }) => [styles.devReset, pressed && { opacity: 0.5 }]}>
+          <Text style={styles.devResetText}>Reset Onboarding (Dev)</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -161,18 +172,12 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   devReset: {
-    marginHorizontal: 22,
-    marginTop: 14,
-    paddingVertical: 10,
-    borderRadius: 9999,
-    backgroundColor: colors.backgroundSecondary,
+    paddingVertical: 12,
+    paddingBottom: 20,
     alignItems: 'center',
   },
   devResetText: {
-    fontSize: 11,
-    fontWeight: fontWeight.medium as '500',
+    fontSize: 12,
     color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
 });
