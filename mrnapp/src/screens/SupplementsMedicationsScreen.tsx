@@ -151,9 +151,16 @@ function SupplementCard({
           <Text style={styles.cardName} numberOfLines={1}>
             {entry.name}
           </Text>
-          <Text style={styles.cardDose} numberOfLines={1}>
-            {formatDose(entry)}
-          </Text>
+          {(() => {
+            const dose = formatDose(entry);
+            return (
+              <Text
+                style={[styles.cardDose, !dose && styles.cardDosePlaceholder]}
+                numberOfLines={1}>
+                {dose || 'Tap to complete'}
+              </Text>
+            );
+          })()}
         </View>
         <View style={styles.cardMeta}>
           <Text style={styles.metaText} numberOfLines={1}>
@@ -571,6 +578,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.body,
     color: colors.textSecondary,
     flexShrink: 0,
+  },
+  cardDosePlaceholder: {
+    color: colors.accent,
+    fontSize: fontSize.sublabel,
   },
   cardMeta: {
     flexDirection: 'row',

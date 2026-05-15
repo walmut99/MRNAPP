@@ -9,16 +9,15 @@ import { useOnboardingState } from '../../hooks/useOnboardingState';
 import { colors, fontWeight } from '../../theme';
 
 const OPTIONS = [
-  'Multivitamin',
-  'Vitamin D',
-  'Vitamin B12',
-  'Iron',
-  'Magnesium',
-  'Omega-3',
-  'Protein Powder',
+  'B12',
+  'Collagen',
   'Creatine',
-  'Probiotic',
-  'Calcium',
+  'Iron',
+  'Magnesium glycinate',
+  'Multivitamin',
+  'Omega-3',
+  'Probiotics',
+  'Vitamin D3',
   'Zinc',
 ];
 

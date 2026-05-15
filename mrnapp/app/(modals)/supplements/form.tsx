@@ -120,6 +120,10 @@ export default function FormScreen() {
     template?: string;
     entryType?: string;
     entryId?: string;
+    prefillName?: string;
+    prefillDose?: string;
+    prefillUnit?: string;
+    prefillFrequency?: string;
   }>();
 
   const mode = params.mode === 'edit' ? 'edit' : 'add';
@@ -145,15 +149,24 @@ export default function FormScreen() {
 
   // ── Form state ───────────────────────────────────────────────────────────
 
-  const [name, setName] = useState(existingEntry?.name ?? '');
+  const [name, setName] = useState(
+    existingEntry?.name ?? params.prefillName ?? '',
+  );
   const [doseAmount, setDoseAmount] = useState(
-    existingEntry?.dose != null ? String(existingEntry.dose) : '',
+    existingEntry?.dose != null
+      ? String(existingEntry.dose)
+      : (params.prefillDose ?? ''),
   );
   const [unit, setUnit] = useState<SupplementEntry['unit']>(
-    existingEntry?.unit ?? (template ? (TEMPLATE_UNITS[template] ?? 'mg') : 'mg'),
+    existingEntry?.unit ??
+    (template ? (TEMPLATE_UNITS[template] ?? 'mg') : null) ??
+    (params.prefillUnit as SupplementEntry['unit'] | undefined) ??
+    'mg',
   );
   const [frequency, setFrequency] = useState<SupplementEntry['frequency']>(
-    existingEntry?.frequency ?? null,
+    existingEntry?.frequency ??
+    (params.prefillFrequency as SupplementEntry['frequency'] | undefined) ??
+    null,
   );
   const [freqDay, setFreqDay] = useState<number | null>(existingEntry?.frequencyDay ?? null);
   const [freqDays, setFreqDays] = useState<number[]>(existingEntry?.frequencyDays ?? []);
@@ -233,7 +246,7 @@ export default function FormScreen() {
     } else {
       addEntry(payload);
     }
-    router.dismissAll();
+    router.dismissTo('/profile/supplements-medications' as never);
   }
 
   function handleDelete() {
@@ -245,7 +258,7 @@ export default function FormScreen() {
         style: 'destructive',
         onPress: () => {
           deleteEntry(existingEntry.id);
-          router.dismissAll();
+          router.dismissTo('/profile/supplements-medications' as never);
         },
       },
     ]);
@@ -257,7 +270,7 @@ export default function FormScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.safe}>
-      <ModalHeader title={title} onClose={() => router.dismissAll()} />
+      <ModalHeader title={title} onClose={() => router.dismissTo('/profile/supplements-medications' as never)} />
 
       <ScrollView
         style={styles.scroll}

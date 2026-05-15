@@ -5,15 +5,57 @@ import OnboardingShell from '../../components/onboarding/OnboardingShell';
 import PlanCard from '../../components/onboarding/PlanCard';
 import { displayStep, totalSteps } from '../../components/onboarding/steps';
 import { useOnboardingState } from '../../hooks/useOnboardingState';
+import { useSupplements } from '../../hooks/useSupplements';
 import { colors, fontWeight } from '../../theme';
+import type { SupplementEntry } from '../../hooks/useSupplements';
+
+const TEMPLATE_UNITS: Record<string, SupplementEntry['unit']> = {
+  'Vitamin D3': 'IU',
+  Creatine: 'g',
+  Multivitamin: 'capsule',
+  Probiotics: 'capsule',
+  Iron: 'mg',
+  'Magnesium glycinate': 'mg',
+  'Omega-3': 'mg',
+  B12: 'mcg',
+  Zinc: 'mg',
+  Collagen: 'g',
+};
 
 export default function PlanSelectionScreen() {
   const router = useRouter();
   const { data: state, update } = useOnboardingState();
+  const { addEntry } = useSupplements();
 
   const choose = (plan: 'essentials' | 'premium') => {
     console.log('IAP placeholder: purchase', plan);
     update({ selectedPlan: plan, completed: true });
+
+    if (plan === 'premium') {
+      const allSelected = [
+        ...state.supplements,
+        ...state.customSupplements,
+      ];
+      allSelected.forEach(name => {
+        addEntry({
+          type: 'supplement',
+          isTemplate: true,
+          name,
+          dose: null,
+          unit: TEMPLATE_UNITS[name] ?? null,
+          frequency: null,
+          frequencyDay: null,
+          frequencyDays: null,
+          startedDate: null,
+          linkedMarkerId: null,
+          retestDate: null,
+          stoppedDate: null,
+          source: 'onboarding',
+          reminderEnabled: false,
+        });
+      });
+    }
+
     router.replace('/');
   };
 

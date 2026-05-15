@@ -31,7 +31,7 @@ export default function PickerScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.safe}>
-      <ModalHeader title="Add to Your Regimen" onClose={() => router.dismissAll()} />
+      <ModalHeader title="Add to Your Regimen" onClose={() => router.dismissTo('/profile/supplements-medications' as never)} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionLabel}>COMMON SUPPLEMENTS</Text>
