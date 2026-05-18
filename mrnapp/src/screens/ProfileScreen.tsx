@@ -7,6 +7,7 @@ import BookingStrip from '../components/profile/BookingStrip';
 import IdentityCard from '../components/profile/IdentityCard';
 import ProfileRow from '../components/profile/ProfileRow';
 import { useMarkers, usePatient } from '../hooks';
+import { useFoodLibrary } from '../hooks/useFoodLibrary';
 import { useOnboardingState } from '../hooks/useOnboardingState';
 import { colors, fontWeight, spacing } from '../theme';
 
@@ -58,6 +59,7 @@ export default function ProfileScreen() {
   const { data: patient } = usePatient();
   const { data: markers } = useMarkers();
   const { reset: resetOnboarding } = useOnboardingState();
+  const { addEntry: addFoodEntry } = useFoodLibrary();
 
   const go = (path: string) => router.push(path as never);
 
@@ -132,6 +134,31 @@ export default function ProfileScreen() {
           onPress={onResetOnboarding}
           style={({ pressed }) => [styles.devReset, pressed && { opacity: 0.5 }]}>
           <Text style={styles.devResetText}>Reset Onboarding (Dev)</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => {
+            const demos = [
+              'Grilled salmon bowl',
+              'Labneh & veggie wrap',
+              'Tuna pasta',
+              'Beef kofta plate',
+              'Avocado toast',
+            ];
+            const name = demos[Math.floor(Math.random() * demos.length)];
+            addFoodEntry({
+              name,
+              kcal: 300 + Math.floor(Math.random() * 500),
+              protein: 20 + Math.floor(Math.random() * 30),
+              fat: 8 + Math.floor(Math.random() * 25),
+              carbs: 10 + Math.floor(Math.random() * 50),
+              restaurant: null,
+              createdAt: new Date().toISOString().split('T')[0],
+              source: 'manual',
+            });
+          }}
+          style={({ pressed }) => [styles.devReset, pressed && { opacity: 0.5 }]}>
+          <Text style={styles.devResetText}>Add Demo Food Entry (Dev)</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
