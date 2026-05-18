@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useInBodyScanHistory } from '../hooks/useHistory';
+import type { InBodyScan, InBodySegment } from '../hooks/useHistory';
 import {
   colors,
   fontSize,
@@ -81,6 +82,40 @@ function StatRow({
   );
 }
 
+// ── Segmental rows ────────────────────────────────────────────────────────────
+
+const SEGMENT_LABELS: Record<keyof InBodyScan['segments'], string> = {
+  leftArm:  'Left Arm',
+  rightArm: 'Right Arm',
+  trunk:    'Trunk',
+  leftLeg:  'Left Leg',
+  rightLeg: 'Right Leg',
+};
+
+const SEGMENT_KEYS: (keyof InBodyScan['segments'])[] = [
+  'leftArm', 'rightArm', 'trunk', 'leftLeg', 'rightLeg',
+];
+
+function SegmentRow({
+  label,
+  segment,
+  last = false,
+}: {
+  label: string;
+  segment: InBodySegment;
+  last?: boolean;
+}) {
+  const isLower = segment.status === 'lower';
+  return (
+    <View style={[styles.statRow, last && styles.statRowLast]}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, isLower && { color: colors.warn }]}>
+        {segment.kg} kg · {segment.pct}%
+      </Text>
+    </View>
+  );
+}
+
 // ── Section header ────────────────────────────────────────────────────────────
 
 function SectionHead({ label }: { label: string }) {
@@ -118,6 +153,8 @@ export default function InBodyScanDetailScreen({ scanId }: Props) {
   function goMarker(key: string) {
     router.push(('/marker/' + key) as never);
   }
+
+  const hasSegments = !!scan.segments?.leftArm;
 
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>
@@ -199,6 +236,23 @@ export default function InBodyScanDetailScreen({ scanId }: Props) {
             <StatRow label="Minerals"          value={scan.minerals}   unit="kg" last />
           </View>
         </View>
+
+        {/* ── Segmental Lean Analysis ── */}
+        {hasSegments && (
+          <View style={styles.section}>
+            <SectionHead label="Segmental Lean Analysis" />
+            <View style={styles.statsBlock}>
+              {SEGMENT_KEYS.map((key, idx) => (
+                <SegmentRow
+                  key={key}
+                  label={SEGMENT_LABELS[key]}
+                  segment={scan.segments[key]}
+                  last={idx === SEGMENT_KEYS.length - 1}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
       </ScrollView>
     </SafeAreaView>
