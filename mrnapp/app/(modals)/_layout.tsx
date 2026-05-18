@@ -9,6 +9,7 @@ export default function ModalsLayout() {
       <Stack.Screen name="inbody-upload/success" />
       <Stack.Screen name="supplements/picker" />
       <Stack.Screen name="supplements/form" />
+      <Stack.Screen name="food-library/edit" />
     </Stack>
   );
 }
