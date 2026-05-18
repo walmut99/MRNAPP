@@ -1,5 +1,3 @@
-import ComingSoonScreen from '../../src/components/shared/ComingSoonScreen';
+import FoodLibraryScreen from '../../src/screens/FoodLibraryScreen';
 
-export default function FoodLibrary() {
-  return <ComingSoonScreen title="Food Library" />;
-}
+export default FoodLibraryScreen;
