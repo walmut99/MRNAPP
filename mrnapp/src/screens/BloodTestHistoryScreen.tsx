@@ -124,9 +124,9 @@ export default function BloodTestHistoryScreen() {
         renderItem={({ item }) => (
           <PanelCard
             panel={item}
-            onPress={() => {
-              // TODO Prompt 2: router.push(`/profile/blood-panel/${item.id}`)
-            }}
+            onPress={() =>
+              router.push({ pathname: '/profile/panel-detail', params: { id: item.id } } as never)
+            }
             onDelete={() => deletePanel(item.id)}
           />
         )}

@@ -128,9 +128,9 @@ export default function InBodyScanHistoryScreen() {
         renderItem={({ item }) => (
           <ScanCard
             scan={item}
-            onPress={() => {
-              // TODO Prompt 2: router.push(`/profile/inbody-scan/${item.id}`)
-            }}
+            onPress={() =>
+              router.push({ pathname: '/profile/inbody-scan-detail', params: { id: item.id } } as never)
+            }
             onDelete={() => deleteScan(item.id)}
           />
         )}
