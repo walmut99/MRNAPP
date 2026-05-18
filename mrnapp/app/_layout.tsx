@@ -31,6 +31,7 @@ export default function RootLayout() {
           <Stack.Screen name="profile/connected-devices" />
           <Stack.Screen name="profile/food-library" />
           <Stack.Screen name="profile/inbody-scan-history" />
+          <Stack.Screen name="profile/inbody-scan-detail" />
           <Stack.Screen name="profile/notifications" />
           <Stack.Screen name="profile/personal-details" />
           <Stack.Screen name="profile/plans" />
