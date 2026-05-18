@@ -1,5 +1,3 @@
-import ComingSoonScreen from '../../src/components/shared/ComingSoonScreen';
+import InBodyScanHistoryScreen from '../../src/screens/InBodyScanHistoryScreen';
 
-export default function InBodyScanHistory() {
-  return <ComingSoonScreen title="InBody Scan History" />;
-}
+export default InBodyScanHistoryScreen;
