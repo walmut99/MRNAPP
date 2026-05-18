@@ -15,9 +15,11 @@ export { usePlans } from './usePlans';
 
 export { useSupplements } from './useSupplements';
 export { useBloodPanelHistory, useInBodyScanHistory } from './useHistory';
+export { useFoodLibrary } from './useFoodLibrary';
 
 export type { MealSuggestion } from './useSuggestions';
 export type { ChatMessage } from './useChat';
 export type { TrendPoint } from './useTrends';
 export type { SupplementEntry } from './useSupplements';
 export type { BloodPanel, BloodMarker, InBodyScan, InBodySegment } from './useHistory';
+export type { FoodEntry } from './useFoodLibrary';

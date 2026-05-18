@@ -334,6 +334,16 @@ export const plans = [
   },
 ];
 
+// Note: Free for all users in v1. May become Premium-gated post-launch.
+// See strategic question: "what's the clear integrating factor for Premium?"
+export const foodLibrary = [
+  { id: 'meal-eggs-labneh',  name: 'Eggs & labneh',                   kcal: 420, protein: 35, fat: 22, carbs: 14, restaurant: null,               timesLogged: 14, createdAt: '2026-04-10', source: 'chat' },
+  { id: 'meal-chicken-kabsa', name: 'Chicken kabsa',                  kcal: 680, protein: 52, fat: 18, carbs: 74, restaurant: 'Beit El Khetyar',   timesLogged: 6,  createdAt: '2026-04-22', source: 'chat' },
+  { id: 'meal-slider-burger', name: 'Slider Burger',                  kcal: 850, protein: 45, fat: 52, carbs: 56, restaurant: 'Slider Station',    timesLogged: 4,  createdAt: '2026-05-01', source: 'chat' },
+  { id: 'meal-protein-shake', name: 'Protein shake',                  kcal: 220, protein: 32, fat: 4,  carbs: 14, restaurant: null,               timesLogged: 8,  createdAt: '2026-03-15', source: 'chat' },
+  { id: 'meal-greek-salad',   name: 'Greek salad with grilled chicken', kcal: 410, protein: 38, fat: 22, carbs: 12, restaurant: null,             timesLogged: 3,  createdAt: '2026-05-10', source: 'chat' },
+];
+
 export const bloodPanels = [
   {
     id: 'panel-may-2026',
@@ -536,4 +546,5 @@ export default {
   supplements,
   bloodPanels,
   inBodyScans,
+  foodLibrary,
 };
