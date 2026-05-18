@@ -27,6 +27,7 @@ export default function RootLayout() {
           <Stack.Screen name="progress" />
           <Stack.Screen name="profile/billing" />
           <Stack.Screen name="profile/blood-test-history" />
+          <Stack.Screen name="profile/panel-detail" />
           <Stack.Screen name="profile/connected-devices" />
           <Stack.Screen name="profile/food-library" />
           <Stack.Screen name="profile/inbody-scan-history" />
