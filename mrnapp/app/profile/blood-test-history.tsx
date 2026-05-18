@@ -1,5 +1,3 @@
-import ComingSoonScreen from '../../src/components/shared/ComingSoonScreen';
+import BloodTestHistoryScreen from '../../src/screens/BloodTestHistoryScreen';
 
-export default function BloodTestHistory() {
-  return <ComingSoonScreen title="Blood Test History" />;
-}
+export default BloodTestHistoryScreen;
