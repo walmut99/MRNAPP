@@ -206,6 +206,28 @@
     color: var(--color-text-secondary);
     margin-top: 2px;
   }
+  /* Right-aligned action button in top-bar (Lab "+" Add) */
+  .top-bar__action {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+  .top-bar__action:hover { background: #D4EFE2; }
+  .top-bar__action--disabled {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .week-chip {
     display: inline-flex;
     align-items: center;
@@ -1379,6 +1401,952 @@
     font-weight: var(--weight-medium);
   }
 
+  /* =================================================================
+     Upload picker — unified "Add Health Data" modal (Blood / InBody)
+     Reuses .upload-* styles from above
+     ================================================================= */
+  /* (no new styles needed — uses .modal-header, .upload-intro, .upload-options, .upload-option) */
+
+  /* =================================================================
+     InBody upload success — peek card + delta values + segmental
+     ================================================================= */
+  .upload-success__peek-delta { display: inline-flex; align-items: center; gap: 4px; }
+  .upload-success__peek-value--delta-good { color: var(--color-accent-dark); }
+  .upload-success__peek-value--delta-neutral { color: var(--color-text-primary); }
+  .upload-success__peek-context {
+    font-size: 10px;
+    font-weight: var(--weight-regular);
+    color: var(--color-text-secondary);
+    margin-left: 4px;
+  }
+  .upload-success__peek-divider {
+    height: 1px;
+    background: var(--color-border-tertiary);
+    margin: 8px 0 6px;
+  }
+  .upload-success__peek-footer {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-align: center;
+  }
+
+  /* =================================================================
+     Supplements & Medications list — Variant A (status bar left edge)
+     ================================================================= */
+  .reg-section { padding: 18px var(--space-section-x); }
+  .reg-section__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .reg-section__label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: var(--weight-medium);
+  }
+  .reg-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 14px;
+    padding: 14px 16px 14px 18px;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .reg-card:hover { background: var(--color-bg-secondary); }
+  .reg-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+  }
+  .reg-card--for-low::before { background: var(--color-warn); }
+  .reg-card--for-high::before { background: var(--color-danger); }
+  .reg-card--standalone::before { background: var(--color-accent); opacity: 0.4; }
+  .reg-card__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 10px; }
+  .reg-card__name { font-size: 15px; font-weight: var(--weight-medium); }
+  .reg-card__dose {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    line-height: 1.35;
+  }
+  .reg-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-top: 4px;
+  }
+  .reg-card__meta-item { display: inline-flex; align-items: center; gap: 4px; }
+  .reg-card__retest { color: var(--color-warn); }
+  .reg-card__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .reg-card__tag--low { background: var(--color-warn-light); color: var(--color-warn); }
+  .reg-card__tag--high { background: var(--color-danger-light); color: var(--color-danger); }
+
+  .reg-add-tile {
+    width: 100%;
+    background: var(--color-bg-primary);
+    border: 1px dashed var(--color-border-tertiary);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-text-secondary);
+    font-family: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .reg-add-tile:hover { background: var(--color-bg-secondary); }
+  .reg-add-tile__icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+  .reg-add-tile__text-main {
+    font-size: 13px;
+    color: var(--color-text-primary);
+    font-weight: var(--weight-medium);
+  }
+  .reg-add-tile__text-sub {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+  }
+
+  /* Empty + Locked hero states */
+  .reg-empty-hero, .reg-locked-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 32px 40px;
+    text-align: center;
+  }
+  .reg-empty-hero__icon, .reg-locked-hero__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .reg-empty-hero__icon { background: var(--color-accent-light); color: var(--color-accent-dark); }
+  .reg-locked-hero__icon { background: var(--color-bg-secondary); color: var(--color-text-secondary); }
+  .reg-empty-hero__title, .reg-locked-hero__title {
+    font-size: 20px;
+    font-weight: var(--weight-medium);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .reg-empty-hero__sub, .reg-locked-hero__sub {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+    max-width: 280px;
+    margin-bottom: 24px;
+  }
+  .reg-locked-hero__features {
+    text-align: left;
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    max-width: 280px;
+    width: 100%;
+  }
+  .reg-locked-hero__feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--color-text-primary);
+    padding: 6px 0;
+    line-height: 1.45;
+  }
+  .reg-locked-hero__feature svg { flex-shrink: 0; margin-top: 2px; color: var(--color-accent-dark); }
+
+  /* =================================================================
+     Add Picker modal — for supplements (list-style rows)
+     ================================================================= */
+  .picker-modal-body { padding: 16px var(--space-section-x); overflow-y: auto; flex: 1; }
+  .picker-modal-section-label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: var(--weight-medium);
+    margin-bottom: 8px;
+    padding-top: 4px;
+  }
+  .picker-list { display: flex; flex-direction: column; gap: 0; margin-bottom: 18px; }
+  .picker-row {
+    padding: 12px 0;
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-size: 14px;
+    background: transparent;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    color: var(--color-text-primary);
+  }
+  .picker-row:last-child { border-bottom: none; }
+  .picker-row:hover { color: var(--color-accent-dark); }
+  .picker-row__chev { color: var(--color-text-secondary); font-size: 18px; }
+  .picker-row--custom { color: var(--color-accent-dark); font-weight: var(--weight-medium); }
+
+  /* =================================================================
+     Supplement Add/Edit form
+     ================================================================= */
+  .form-scroll { overflow-y: auto; flex: 1; padding: 16px var(--space-section-x) 24px; }
+  .name-banner {
+    background: var(--color-accent-light);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .name-banner__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--color-accent);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .name-banner__label {
+    font-size: 10px;
+    color: var(--color-accent-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: var(--weight-medium);
+    margin-bottom: 1px;
+  }
+  .name-banner__name {
+    font-size: 16px;
+    font-weight: var(--weight-medium);
+    color: var(--color-accent-dark);
+  }
+  .form-field { margin-bottom: 18px; }
+  .form-field__label {
+    display: block;
+    font-size: 11px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  .form-field__label-optional {
+    color: var(--color-text-secondary);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: var(--weight-regular);
+  }
+  .form-input, .form-select {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--color-bg-secondary);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-size: 15px;
+    color: var(--color-text-primary);
+    font-family: inherit;
+  }
+  .form-input--placeholder { color: var(--color-text-secondary); }
+  .form-row-dose {
+    display: grid;
+    grid-template-columns: 1fr 110px;
+    gap: 10px;
+  }
+  .form-day-picker {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-top: 10px;
+  }
+  .form-day-chip {
+    padding: 10px 0;
+    background: var(--color-bg-secondary);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+    text-align: center;
+    font-family: inherit;
+  }
+  .form-day-chip--active { background: var(--color-accent); color: #fff; }
+  .form-toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+  }
+  .form-toggle-row--phase2 { opacity: 0.55; }
+  .form-toggle-row__label {
+    font-size: 14px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-primary);
+    margin-bottom: 2px;
+  }
+  .form-toggle-row__sub { font-size: 11px; color: var(--color-text-secondary); }
+  .form-toggle-pill {
+    width: 44px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--color-border-tertiary);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .form-toggle-pill::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 22px; height: 22px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .form-toggle-coming {
+    font-size: 9px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+  }
+  .form-section-divider {
+    height: 1px;
+    background: var(--color-border-tertiary);
+    margin: 8px 0 18px;
+  }
+  .form-delete-action {
+    width: 100%;
+    padding: 14px 16px;
+    background: transparent;
+    border: 1px solid var(--color-danger-light);
+    border-radius: 12px;
+    color: var(--color-danger);
+    font-size: 14px;
+    font-weight: var(--weight-medium);
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .form-delete-action:hover { background: var(--color-danger-light); }
+  .form-footer-cta {
+    padding: 14px var(--space-section-x) 24px;
+    border-top: var(--space-divider) solid var(--color-border-tertiary);
+    flex-shrink: 0;
+    background: var(--color-bg-primary);
+  }
+
+  /* =================================================================
+     Chat auto-fill confirmation card — V1 (fancy bubble)
+     Bubbles match existing chat pattern; card has structured content
+     ================================================================= */
+  .chat-bubble-ai {
+    align-self: flex-start;
+    max-width: 78%;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    padding: 10px 14px;
+    border-radius: 18px 18px 18px 4px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .chat-bubble-user {
+    align-self: flex-end;
+    max-width: 78%;
+    background: var(--color-accent);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 18px 18px 4px 18px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .confirm-card {
+    align-self: flex-start;
+    max-width: 82%;
+    background: var(--color-bg-secondary);
+    border-radius: 18px 18px 18px 4px;
+    overflow: hidden;
+  }
+  .confirm-card__head {
+    padding: 12px 16px 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    color: var(--color-accent-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .confirm-card__head svg { color: var(--color-accent); flex-shrink: 0; }
+  .confirm-card__body { padding: 0 16px 12px; }
+  .confirm-card__name {
+    font-size: 17px;
+    font-weight: var(--weight-medium);
+    margin-bottom: 2px;
+    letter-spacing: -0.01em;
+  }
+  .confirm-card__meta {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+  }
+  .confirm-card__meta-sub { font-size: 11px; margin-top: 2px; }
+  .confirm-card__actions {
+    display: flex;
+    gap: 6px;
+    padding: 0 12px 12px;
+  }
+  .confirm-card__action {
+    flex: 1;
+    padding: 9px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .confirm-card__action--primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+  }
+
+  /* =================================================================
+     Pass A — History pages (Blood Test, InBody) + Food Library
+     Shared patterns: card-row container, dual-swipe pattern
+     ================================================================= */
+  .history-section { padding: 18px var(--space-section-x); }
+  .history-section__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .history-section__label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: var(--weight-medium);
+  }
+
+  /* Card-row: container that holds the card + swipe reveal layers */
+  .card-row {
+    position: relative;
+    margin-bottom: 8px;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  /* Delete reveal (left-swipe) */
+  .card-row__delete {
+    position: absolute;
+    inset: 0;
+    background: #C57676;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 20px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: var(--weight-medium);
+    gap: 6px;
+  }
+  /* Edit reveal (right-swipe) — only for editable items */
+  .card-row__edit {
+    position: absolute;
+    inset: 0;
+    background: #4A7FA5;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 20px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: var(--weight-medium);
+    gap: 6px;
+  }
+  /* Card itself */
+  .card-row__card {
+    position: relative;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.15s;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    color: var(--color-text-primary);
+  }
+  .card-row__card:hover { background: var(--color-bg-secondary); }
+  /* Swiped states — for demoing in prototype */
+  .card-row--swiped-left .card-row__card { transform: translateX(-90px); }
+  .card-row--swiped-right .card-row__card { transform: translateX(90px); }
+
+  /* Blood Test History card content */
+  .history-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .history-card__date {
+    font-size: 15px;
+    font-weight: var(--weight-medium);
+  }
+  .history-card__chev {
+    color: var(--color-text-secondary);
+    font-size: 16px;
+  }
+  .history-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .history-card__flag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: var(--weight-medium);
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--color-warn-light);
+    color: var(--color-warn);
+  }
+  .history-card__flag-badge--high { background: var(--color-danger-light); color: var(--color-danger); }
+
+  /* InBody Scan History card content (3-stat snapshot) */
+  .inbody-card-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .inbody-card-stat-label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+  .inbody-card-stat-value {
+    font-size: 14px;
+    font-weight: var(--weight-medium);
+    font-variant-numeric: tabular-nums;
+  }
+  .inbody-card-stat-unit {
+    font-size: 10px;
+    font-weight: var(--weight-regular);
+    color: var(--color-text-secondary);
+    margin-left: 1px;
+  }
+
+  /* Swipe hint footer */
+  .swipe-hint {
+    padding: 12px var(--space-section-x) 20px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+  .swipe-hint__row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 8px;
+  }
+  .swipe-hint__row svg { flex-shrink: 0; }
+
+  /* =================================================================
+     Panel Detail screen — variable panel principle
+     ================================================================= */
+  .panel-header {
+    padding: 18px var(--space-section-x);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .panel-header__date {
+    font-size: 22px;
+    font-weight: var(--weight-medium);
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .panel-header__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .panel-section { padding: 14px var(--space-section-x) 4px; }
+  .panel-section__label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: var(--weight-medium);
+    margin-bottom: 8px;
+  }
+  /* Variable panel info note */
+  .panel-note {
+    margin: 18px var(--space-section-x) 24px;
+    padding: 12px 14px;
+    background: var(--color-bg-secondary);
+    border-radius: 10px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+  /* Normal marker rows in Panel Detail */
+  .panel-normal-marker {
+    display: grid;
+    grid-template-columns: 16px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+    cursor: pointer;
+  }
+  .panel-normal-marker:last-child { border-bottom: none; }
+  .panel-normal-marker__name { font-size: 14px; }
+  .panel-normal-marker__value {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .panel-normal-marker .status-dot { background: var(--color-accent); }
+  .panel-normal-marker .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .panel-category-group { margin-bottom: 8px; }
+  .panel-category-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+  }
+  /* Panel flagged marker mini-card */
+  .panel-flag-card {
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .panel-flag-card--high { background: var(--color-danger-light); }
+  .panel-flag-card--low { background: var(--color-warn-light); }
+  .panel-flag-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .panel-flag-card__name { font-size: 14px; font-weight: var(--weight-medium); }
+  .panel-flag-card__status {
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .panel-flag-card--high .panel-flag-card__status { color: var(--color-danger); }
+  .panel-flag-card--low .panel-flag-card__status { color: var(--color-warn); }
+  .panel-flag-card__value {
+    font-size: 16px;
+    font-weight: var(--weight-medium);
+    letter-spacing: -0.01em;
+  }
+  .panel-flag-card__value-unit {
+    font-size: 11px;
+    font-weight: var(--weight-regular);
+    color: var(--color-text-secondary);
+    margin-left: 2px;
+  }
+  .panel-flag-card__range {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+
+  /* =================================================================
+     InBody Scan Detail screen
+     ================================================================= */
+  .scan-header {
+    padding: 18px var(--space-section-x);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .scan-header__date {
+    font-size: 22px;
+    font-weight: var(--weight-medium);
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+  }
+  .scan-header__meta { font-size: 11px; color: var(--color-text-secondary); }
+  .scan-header__score-value {
+    font-size: 22px;
+    font-weight: var(--weight-medium);
+    color: var(--color-accent-dark);
+    text-align: right;
+  }
+  .scan-header__score-label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: right;
+  }
+  /* Body Composition stat grid */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-card {
+    background: var(--color-bg-secondary);
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    color: var(--color-text-primary);
+  }
+  .stat-card:hover { background: #ECECE8; }
+  .stat-card__label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .stat-card__value {
+    font-size: 22px;
+    font-weight: var(--weight-medium);
+    letter-spacing: -0.01em;
+  }
+  .stat-card__unit {
+    font-size: 12px;
+    font-weight: var(--weight-regular);
+    color: var(--color-text-secondary);
+    margin-left: 2px;
+  }
+  /* Body Stats list */
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+  }
+  .stats-row:last-child { border-bottom: none; }
+  .stats-row__label { font-size: 13px; }
+  .stats-row__value {
+    font-size: 13px;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* =================================================================
+     Food Library
+     ================================================================= */
+  .food-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+    gap: 10px;
+  }
+  .food-card__name {
+    font-size: 15px;
+    font-weight: var(--weight-medium);
+  }
+  .food-card__kcal {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .food-card__restaurant {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+  }
+  .food-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .food-card__macros {
+    display: flex;
+    gap: 10px;
+  }
+  .food-card__macro {
+    font-variant-numeric: tabular-nums;
+  }
+  .food-card__macro strong {
+    font-weight: var(--weight-medium);
+    color: var(--color-text-primary);
+  }
+  .food-card__times {
+    color: var(--color-accent-dark);
+    font-weight: var(--weight-medium);
+    background: var(--color-accent-light);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+  }
+
+  /* Empty state hero for Food Library + reused elsewhere */
+  .lib-empty-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 32px 40px;
+    text-align: center;
+  }
+  .lib-empty-hero__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .lib-empty-hero__title {
+    font-size: 20px;
+    font-weight: var(--weight-medium);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .lib-empty-hero__sub {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+    max-width: 300px;
+    margin-bottom: 28px;
+  }
+  .lib-empty-hero__example {
+    background: var(--color-bg-secondary);
+    border-radius: 14px;
+    padding: 16px 18px;
+    max-width: 300px;
+    text-align: left;
+  }
+  .lib-empty-hero__example-label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: var(--weight-medium);
+    margin-bottom: 6px;
+  }
+  .lib-empty-hero__example-quote {
+    font-size: 13px;
+    color: var(--color-text-primary);
+    font-style: italic;
+    line-height: 1.45;
+  }
+
+  /* History page back-and-add top bar (reuses top-bar pattern; just add right action) */
+  .history-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px var(--space-section-x);
+    background: var(--color-bg-primary);
+    border-bottom: var(--space-divider) solid var(--color-border-tertiary);
+    flex-shrink: 0;
+  }
+  .history-top-bar__left { display: flex; align-items: center; gap: 12px; }
+
+  /* =================================================================
+     Reset Onboarding (Dev) button — sits at bottom of Profile
+     ================================================================= */
+  .dev-reset-btn {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-family: inherit;
+    text-align: center;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .dev-reset-btn:hover { color: var(--color-text-primary); }
+
   /* ----- Profile ----- */
   .identity-card {
     display: flex;
@@ -1780,6 +2748,7 @@ const DATA = {
     heightCm: 165,
     activity: 'Lightly active',
     plan: 'Premium',
+    subscriptionTier: 'premium', // 'essentials' | 'premium' — dev toggleable
     programWeek: 6,
     programTotalWeeks: 16,
     streakDays: 14, // illustrative
@@ -1805,6 +2774,11 @@ const DATA = {
   inbody: {
     lastScanDate: 'Mar 5, 2026', // illustrative — ~6 weeks ago
     score: 78, // illustrative
+    // Scan history — when length >= 1, success screen shows subsequent (deltas) instead of first-scan view
+    scanHistory: [
+      { date: 'Jan 22, 2026', weight: 71.0, bodyFat: 29.5, muscle: 23.8 },
+      { date: 'Mar 5, 2026', weight: 69.5, bodyFat: 28.7, muscle: 23.8 },
+    ],
     // per-segment muscle: kg + % of normal range. 100% = normal baseline.
     segments: {
       leftArm:  { kg: 2.4, pct: 98,  status: 'normal' },
@@ -2002,11 +2976,234 @@ const DATA = {
   notifications: {
     // illustrative — only used on stub
   },
+  /* ----- Supplements & Medications (Premium feature) ----- */
+  supplements: {
+    /* Sarah's regimen — entries display in alphabetical order in their section.
+       Variant A status bar: linkedMarker tints the left edge (warn = LOW, danger = HIGH, accent = standalone). */
+    entries: [
+      {
+        id: 'sup-iron',
+        type: 'supplement',
+        isTemplate: true,
+        name: 'Iron',
+        dose: 65, unit: 'mg',
+        frequency: 'daily',
+        startedDate: 'Mar 12, 2026',
+        linkedMarker: { name: 'Ferritin', status: 'low' },
+        retestDate: null,
+        stoppedDate: null,
+        source: 'manual',
+      },
+      {
+        id: 'sup-magnesium',
+        type: 'supplement',
+        isTemplate: true,
+        name: 'Magnesium glycinate',
+        dose: 400, unit: 'mg',
+        frequency: 'daily',
+        startedDate: 'Feb 1, 2026',
+        linkedMarker: null,
+        retestDate: null,
+        stoppedDate: null,
+        source: 'manual',
+      },
+      {
+        id: 'sup-multi',
+        type: 'supplement',
+        isTemplate: true,
+        name: 'Multivitamin',
+        dose: 1, unit: 'capsule',
+        frequency: 'daily',
+        startedDate: 'Jan 8, 2026',
+        linkedMarker: null,
+        retestDate: null,
+        stoppedDate: null,
+        source: 'manual',
+      },
+      {
+        id: 'sup-vitd',
+        type: 'supplement',
+        isTemplate: true,
+        name: 'Vitamin D3',
+        dose: 5000, unit: 'IU',
+        frequency: 'weekly',
+        frequencyDay: 0, // Sunday (0 = Sun)
+        startedDate: 'May 18, 2026',
+        linkedMarker: { name: 'Vitamin D', status: 'low' },
+        retestDate: 'Aug 15, 2026',
+        stoppedDate: null,
+        source: 'manual',
+      },
+    ],
+    /* Common supplements list — used by the Add Picker */
+    commonTemplates: [
+      { name: 'B12', defaultUnit: 'mcg' },
+      { name: 'Collagen', defaultUnit: 'g' },
+      { name: 'Creatine', defaultUnit: 'g' },
+      { name: 'Iron', defaultUnit: 'mg' },
+      { name: 'Magnesium glycinate', defaultUnit: 'mg' },
+      { name: 'Multivitamin', defaultUnit: 'capsule' },
+      { name: 'Omega-3', defaultUnit: 'mg' },
+      { name: 'Probiotics', defaultUnit: 'capsule' },
+      { name: 'Vitamin D3', defaultUnit: 'IU' },
+      { name: 'Zinc', defaultUnit: 'mg' },
+    ],
+  },
+
+  /* ----- Blood panel history — variable panels (different markers each visit) ----- */
+  bloodPanelHistory: [
+    {
+      id: 'panel-may-2026',
+      date: 'May 18, 2026',
+      lab: 'Al Bannay',
+      markerCount: 18,
+      flaggedCount: 3,
+      flaggedHighest: 'high', // for badge color
+      // Markers on this panel — variable per visit
+      markers: [
+        // (Detail expansion lives in renderPanelDetail; demo uses Dec 12 panel below)
+      ],
+    },
+    {
+      id: 'panel-mar-2026',
+      date: 'Mar 5, 2026',
+      lab: 'Al Bannay',
+      markerCount: 22,
+      flaggedCount: 2,
+      flaggedHighest: 'low',
+      markers: [],
+    },
+    {
+      id: 'panel-dec-2025',
+      date: 'Dec 12, 2025',
+      lab: 'Al Bannay',
+      markerCount: 8,
+      flaggedCount: 1,
+      flaggedHighest: 'high',
+      /* Demo panel — used by renderPanelDetail when tapped */
+      markers: [
+        { name: 'Cortisol', value: 26, unit: 'µg/dL', status: 'high', range: '6–18', category: 'Hormonal' },
+        { name: 'Ferritin', value: 52, unit: 'µg/L', status: 'normal', category: 'Nutrients' },
+        { name: 'Vitamin D', value: 38, unit: 'ng/mL', status: 'normal', category: 'Nutrients' },
+        { name: 'HbA1c', value: 5.4, unit: '%', status: 'normal', category: 'Metabolic' },
+        { name: 'Fasting glucose', value: 89, unit: 'mg/dL', status: 'normal', category: 'Metabolic' },
+        { name: 'Total cholesterol', value: 182, unit: 'mg/dL', status: 'normal', category: 'Lipids' },
+        { name: 'HDL', value: 58, unit: 'mg/dL', status: 'normal', category: 'Lipids' },
+        { name: 'LDL', value: 98, unit: 'mg/dL', status: 'normal', category: 'Lipids' },
+      ],
+    },
+    {
+      id: 'panel-aug-2025',
+      date: 'Aug 4, 2025',
+      lab: 'DNA Center',
+      markerCount: 26,
+      flaggedCount: 0,
+      flaggedHighest: null,
+      markers: [],
+    },
+  ],
+
+  /* ----- InBody Scan History — fixed schema, variable values per scan ----- */
+  inbodyScanHistory: [
+    {
+      id: 'scan-may-2026',
+      date: 'May 12, 2026',
+      scanNumber: 6,
+      lab: 'Al Bannay Clinic',
+      score: 84,
+      weight: 68.4, bodyFat: 28.1, muscle: 24.1, fatMass: 19.2,
+      bmr: 1420, visceralFat: 6, water: 35.6, protein: 9.9, minerals: 3.4,
+      segments: {
+        leftArm:  { kg: 2.4, pct: 98,  status: 'normal' },
+        rightArm: { kg: 2.5, pct: 102, status: 'normal' },
+        trunk:    { kg: 19.8, pct: 96, status: 'normal' },
+        leftLeg:  { kg: 7.6, pct: 91,  status: 'lower' },
+        rightLeg: { kg: 7.8, pct: 94,  status: 'normal' },
+      },
+    },
+    {
+      id: 'scan-mar-2026',
+      date: 'Mar 5, 2026',
+      scanNumber: 5,
+      lab: 'Al Bannay Clinic',
+      score: 82,
+      weight: 69.5, bodyFat: 28.7, muscle: 23.8, fatMass: 19.9,
+      bmr: 1395, visceralFat: 6, water: 35.4, protein: 9.8, minerals: 3.4,
+      segments: {
+        leftArm:  { kg: 2.4, pct: 98,  status: 'normal' },
+        rightArm: { kg: 2.5, pct: 102, status: 'normal' },
+        trunk:    { kg: 19.5, pct: 96, status: 'normal' },
+        leftLeg:  { kg: 7.5, pct: 91,  status: 'lower' },
+        rightLeg: { kg: 7.8, pct: 94,  status: 'normal' },
+      },
+    },
+    {
+      id: 'scan-jan-2026',
+      date: 'Jan 22, 2026',
+      scanNumber: 4,
+      lab: 'Al Bannay Clinic',
+      score: 80,
+      weight: 71.0, bodyFat: 29.5, muscle: 23.8, fatMass: 21.0,
+      bmr: 1380, visceralFat: 7, water: 34.9, protein: 9.6, minerals: 3.3,
+      segments: {},
+    },
+    {
+      id: 'scan-nov-2025',
+      date: 'Nov 8, 2025',
+      scanNumber: 3,
+      lab: 'Al Bannay Clinic',
+      score: 78,
+      weight: 72.4, bodyFat: 30.2, muscle: 23.5, fatMass: 21.9,
+      bmr: 1360, visceralFat: 7, water: 34.5, protein: 9.5, minerals: 3.3,
+      segments: {},
+    },
+  ],
+
+  /* ----- Food Library — AI-saved meals (Premium-style feature, free for now) ----- */
+  foodLibrary: {
+    entries: [
+      {
+        id: 'meal-eggs-labneh',
+        name: 'Eggs & labneh',
+        kcal: 420, protein: 35, fat: 22, carbs: 14,
+        restaurant: null,
+        timesLogged: 14,
+      },
+      {
+        id: 'meal-chicken-kabsa',
+        name: 'Chicken kabsa',
+        kcal: 680, protein: 52, fat: 18, carbs: 74,
+        restaurant: 'Beit El Khetyar',
+        timesLogged: 6,
+      },
+      {
+        id: 'meal-slider-burger',
+        name: 'Slider Burger',
+        kcal: 850, protein: 45, fat: 52, carbs: 56,
+        restaurant: 'Slider Station',
+        timesLogged: 4,
+      },
+      {
+        id: 'meal-protein-shake',
+        name: 'Protein shake',
+        kcal: 220, protein: 32, fat: 4, carbs: 14,
+        restaurant: null,
+        timesLogged: 8,
+      },
+      {
+        id: 'meal-greek-salad',
+        name: 'Greek salad with grilled chicken',
+        kcal: 410, protein: 38, fat: 22, carbs: 12,
+        restaurant: null,
+        timesLogged: 3,
+      },
+    ],
+  },
 };
 
 /* ----- 7.2 Router state ----- */
 const state = {
-  currentScreen: 'home',       // 'home' | 'nutrition' | 'lab' | 'profile' | 'marker-detail' | 'upload-source' | 'upload-parsing' | 'upload-success' | 'onboarding-{stepKey}'
+  currentScreen: 'home',       // 'home' | 'nutrition' | 'lab' | 'profile' | 'marker-detail' | 'upload-picker' | 'upload-source' | 'upload-parsing' | 'upload-success' | 'inbody-upload-source' | 'inbody-upload-parsing' | 'inbody-upload-success' | 'supplements' | 'supplement-picker' | 'supplement-form' | 'supplement-edit' | 'supplement-chat-demo' | 'onboarding-{stepKey}'
   nutritionTab: 'chat',        // 'chat' | 'log'
   labTab: 'blood',             // 'blood' | 'inbody' (Trends removed — moved into Marker Detail)
   trendMarker: 'cortisol',     // key of DATA.trends
@@ -2024,6 +3221,13 @@ const state = {
     selectedGoal: null,
     selectedPlan: null,
   },
+  /* Supplements feature state */
+  supplementFormMode: 'add',   // 'add' | 'edit'
+  supplementFormTemplate: null,// e.g. 'Vitamin D3' when adding from template
+  supplementFormCustom: false, // true when adding custom (no template)
+  supplementEditingId: null,   // ID being edited when supplementFormMode === 'edit'
+  /* Dev toggles */
+  devEssentialsTier: false,    // if true, render Supplements as Locked state instead of Populated
 };
 
 /* ----- 7.3 Small render helpers ----- */
@@ -2574,8 +3778,14 @@ function renderLab() {
     <section class="flex-screen ${state.currentScreen === 'lab' ? 'flex-screen--active' : ''}" data-screen="lab" style="height: 100%;">
       <div class="top-bar">
         <div>
-          <div class="top-bar__greeting top-bar__greeting--large">Health Data</div>
+          <div class="top-bar__greeting top-bar__greeting--large">Lab</div>
         </div>
+        <button class="top-bar__action" data-nav="upload-picker" aria-label="Add health data">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
       </div>
 
       <div class="subtab-bar">
@@ -2982,17 +4192,35 @@ function renderMarkerDetail() {
         </button>
       </section>
 
-      ${marker.status === 'high' || marker.status === 'low' || marker.status === 'borderline' ? `
-        <section class="section">
-          <div class="section__head">
-            <div class="section-label">Treatment</div>
-            <div class="section-label section-label--count">None Tracked</div>
-          </div>
-          <div class="treatment-empty">
-            No treatment tracked. Mention any prescription to your AI nutritionist and they'll add it.
-          </div>
-        </section>
-      ` : ''}
+      ${marker.status === 'high' || marker.status === 'low' || marker.status === 'borderline' ? (() => {
+        // Find any supplements linked to this marker
+        const linkedSupps = (DATA.supplements && DATA.supplements.entries || [])
+          .filter(s => !s.stoppedDate && s.linkedMarker && s.linkedMarker.name.toLowerCase() === marker.name.toLowerCase());
+
+        if (linkedSupps.length === 0) {
+          return `
+            <section class="section">
+              <div class="section__head">
+                <div class="section-label">Treatment</div>
+                <div class="section-label section-label--count">None Tracked</div>
+              </div>
+              <div class="treatment-empty">
+                No treatment tracked. Mention any prescription to your AI nutritionist and they'll add it.
+              </div>
+            </section>
+          `;
+        }
+
+        return `
+          <section class="section">
+            <div class="section__head">
+              <div class="section-label">Treatment</div>
+              <div class="section-label section-label--count">${linkedSupps.length} tracked</div>
+            </div>
+            ${linkedSupps.map(s => renderSupplementCard(s)).join('')}
+          </section>
+        `;
+      })() : ''}
 
     </section>`;
 }
@@ -3026,7 +4254,7 @@ function renderUploadSource() {
     <section class="screen screen--modal ${state.currentScreen === 'upload-source' ? 'screen--active' : ''}" data-screen="upload-source">
       <div class="modal-header">
         <div class="modal-header__title">New Blood Test</div>
-        <button class="modal-header__close" data-nav="profile">✕</button>
+        <button class="modal-header__close" data-nav="lab">✕</button>
       </div>
 
       <section class="section" style="padding-top: 0;">
@@ -3073,7 +4301,7 @@ function renderUploadParsing() {
     <section class="screen screen--modal ${state.currentScreen === 'upload-parsing' ? 'screen--active' : ''}" data-screen="upload-parsing">
       <div class="modal-header">
         <div class="modal-header__title">New Blood Test</div>
-        <button class="modal-header__close" data-nav="profile">✕</button>
+        <button class="modal-header__close" data-nav="lab">✕</button>
       </div>
 
       <div class="upload-parsing">
@@ -3113,7 +4341,7 @@ function renderUploadSuccess() {
     <section class="screen screen--modal ${state.currentScreen === 'upload-success' ? 'screen--active' : ''}" data-screen="upload-success">
       <div class="modal-header">
         <div class="modal-header__title">All Set</div>
-        <button class="modal-header__close" data-nav="profile">✕</button>
+        <button class="modal-header__close" data-nav="lab">✕</button>
       </div>
 
       <div class="upload-success">
@@ -3140,7 +4368,1033 @@ function renderUploadSuccess() {
 
       <div class="upload-success__footer">
         <button class="cta-primary" data-nav="lab">View My Lab Data</button>
-        <button class="cta-text" data-nav="profile">Done</button>
+        <button class="cta-text" data-nav="lab">Done</button>
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3b Unified Upload Picker — "Add Health Data" modal
+   Reached from Lab top-bar "+" button
+   ================================================================= */
+function renderUploadPicker() {
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'upload-picker' ? 'screen--active' : ''}" data-screen="upload-picker">
+      <div class="modal-header">
+        <div class="modal-header__title">Add Health Data</div>
+        <button class="modal-header__close" data-nav="lab">✕</button>
+      </div>
+
+      <section class="section" style="padding-top: 0;">
+        <div class="upload-intro">
+          <div class="upload-intro__title">What would you like to add?</div>
+          <div class="upload-intro__sub">Upload a blood test or InBody scan. We'll handle the rest.</div>
+        </div>
+
+        <div class="upload-options">
+          <button class="upload-option" data-nav="upload-source">
+            <div class="upload-option__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="8" y1="13" x2="16" y2="13"/>
+                <line x1="8" y1="17" x2="13" y2="17"/>
+              </svg>
+            </div>
+            <div class="upload-option__body">
+              <div class="upload-option__title">Blood Test</div>
+              <div class="upload-option__sub">Lab report — markers and ranges</div>
+            </div>
+            <div class="upload-option__chevron">›</div>
+          </button>
+
+          <button class="upload-option" data-nav="inbody-upload-source">
+            <div class="upload-option__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="5" r="2.5"/>
+                <path d="M12 8 L12 14"/>
+                <path d="M8 11 L16 11"/>
+                <path d="M12 14 L9 21"/>
+                <path d="M12 14 L15 21"/>
+              </svg>
+            </div>
+            <div class="upload-option__body">
+              <div class="upload-option__title">InBody Scan</div>
+              <div class="upload-option__sub">Body composition and segmental data</div>
+            </div>
+            <div class="upload-option__chevron">›</div>
+          </button>
+        </div>
+      </section>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3c InBody Upload flow — source, parsing, success
+   Mirrors blood test upload pattern; success branches on scan history.
+   ================================================================= */
+function renderInBodyUploadSource() {
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'inbody-upload-source' ? 'screen--active' : ''}" data-screen="inbody-upload-source">
+      <div class="modal-header">
+        <div class="modal-header__title">New InBody Scan</div>
+        <button class="modal-header__close" data-nav="lab">✕</button>
+      </div>
+
+      <section class="section" style="padding-top: 0;">
+        <div class="upload-intro">
+          <div class="upload-intro__title">How would you like to add it?</div>
+          <div class="upload-intro__sub">We'll pull your body composition and segmental data automatically.</div>
+        </div>
+
+        <div class="upload-options">
+          <button class="upload-option" data-nav="inbody-upload-parsing">
+            <div class="upload-option__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </div>
+            <div class="upload-option__body">
+              <div class="upload-option__title">Take a Photo</div>
+              <div class="upload-option__sub">Snap a printed scan sheet</div>
+            </div>
+            <div class="upload-option__chevron">›</div>
+          </button>
+
+          <button class="upload-option" data-nav="inbody-upload-parsing">
+            <div class="upload-option__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+            <div class="upload-option__body">
+              <div class="upload-option__title">Choose From Library</div>
+              <div class="upload-option__sub">Pick a photo you already saved</div>
+            </div>
+            <div class="upload-option__chevron">›</div>
+          </button>
+        </div>
+      </section>
+    </section>`;
+}
+
+function renderInBodyUploadParsing() {
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'inbody-upload-parsing' ? 'screen--active' : ''}" data-screen="inbody-upload-parsing">
+      <div class="modal-header">
+        <div class="modal-header__title">New InBody Scan</div>
+        <button class="modal-header__close" data-nav="lab">✕</button>
+      </div>
+
+      <div class="upload-parsing">
+        <div class="upload-parsing__spinner">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="40" fill="none" stroke="#E8E8E6" stroke-width="4"/>
+            <circle cx="48" cy="48" r="40" fill="none" stroke="#1D9E75" stroke-width="4" stroke-linecap="round" stroke-dasharray="180 251" transform="rotate(-90 48 48)">
+              <animateTransform attributeName="transform" type="rotate" from="-90 48 48" to="270 48 48" dur="1.6s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          <div class="upload-parsing__icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="5" r="2.5"/>
+              <path d="M12 8 L12 14"/>
+              <path d="M8 11 L16 11"/>
+              <path d="M12 14 L9 21"/>
+              <path d="M12 14 L15 21"/>
+            </svg>
+          </div>
+        </div>
+        <div class="upload-parsing__title">Reading your scan</div>
+        <div class="upload-parsing__sub">Extracting body composition and segmental analysis. This usually takes about 10 seconds.</div>
+
+        <button class="cta-tertiary" data-nav="inbody-upload-success" style="margin-top: 24px;">
+          (Demo: Skip to Success)
+        </button>
+      </div>
+
+      <div class="upload-parsing__footer">
+        Privacy: this stays on your device until you save
+      </div>
+    </section>`;
+}
+
+function renderInBodyUploadSuccess() {
+  /* Branches on DATA.inbody.scanHistory.length:
+     - 0 = first scan → show current values neutrally
+     - >= 1 = subsequent → show deltas vs prior with goal-aware coloring
+     Sarah's goal is "Reduce body fat" so body fat ↓ = green, muscle ↑ = green. */
+  const history = DATA.inbody.scanHistory || [];
+  const isSubsequent = history.length >= 1;
+
+  const bodyComp = DATA.bodyComp;
+  let peekContent = '';
+
+  if (!isSubsequent) {
+    peekContent = `
+      <div class="upload-success__peek-row">
+        <span class="upload-success__peek-label">Body Fat</span>
+        <span class="upload-success__peek-value">${bodyComp.bodyFat.value}%</span>
+      </div>
+      <div class="upload-success__peek-row">
+        <span class="upload-success__peek-label">Muscle Mass</span>
+        <span class="upload-success__peek-value">${bodyComp.muscle.value} kg</span>
+      </div>
+    `;
+  } else {
+    /* Compute weeks since prior scan (Mar 5 → today, ~6 weeks for prototype) */
+    const weeksSince = 6;
+    const priorDate = history[history.length - 1].date;
+
+    /* Goal-aware coloring: bodyFat ↓ aligned with "Reduce body fat" → green */
+    const bfDelta = bodyComp.bodyFat.change; // -1.4
+    const bfDir = bfDelta < 0 ? '↓' : '↑';
+    const bfClass = (bfDelta < 0) ? 'upload-success__peek-value--delta-good' : 'upload-success__peek-value--delta-neutral';
+
+    const mmDelta = bodyComp.muscle.change; // +0.3
+    const mmDir = mmDelta > 0 ? '↑' : (mmDelta < 0 ? '↓' : '→');
+    const mmClass = (mmDelta > 0) ? 'upload-success__peek-value--delta-good' : 'upload-success__peek-value--delta-neutral';
+
+    peekContent = `
+      <div class="upload-success__peek-row">
+        <span class="upload-success__peek-label">Body Fat</span>
+        <span class="upload-success__peek-value ${bfClass}"><span class="upload-success__peek-delta">${bfDir} ${Math.abs(bfDelta)}%</span><span class="upload-success__peek-context">to ${bodyComp.bodyFat.value}%</span></span>
+      </div>
+      <div class="upload-success__peek-row">
+        <span class="upload-success__peek-label">Muscle Mass</span>
+        <span class="upload-success__peek-value ${mmClass}"><span class="upload-success__peek-delta">${mmDir} ${Math.abs(mmDelta)} kg</span><span class="upload-success__peek-context">to ${bodyComp.muscle.value} kg</span></span>
+      </div>
+      <div class="upload-success__peek-divider"></div>
+      <div class="upload-success__peek-footer">vs scan from ${priorDate}</div>
+    `;
+  }
+
+  const subCopy = isSubsequent
+    ? `Six weeks since your last scan. Here's how things have moved.`
+    : `Your body composition and segmental data will inform every recommendation going forward.`;
+
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'inbody-upload-success' ? 'screen--active' : ''}" data-screen="inbody-upload-success">
+      <div class="modal-header">
+        <div class="modal-header__title">All Set</div>
+        <button class="modal-header__close" data-nav="lab">✕</button>
+      </div>
+
+      <div class="upload-success">
+        <div class="upload-success__check">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+
+        <div class="upload-success__title">Scan Saved</div>
+        <div class="upload-success__sub">${subCopy}</div>
+
+        <div class="upload-success__peek">
+          ${peekContent}
+        </div>
+      </div>
+
+      <div class="upload-success__footer">
+        <button class="cta-primary" data-nav="lab">Done</button>
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3d Supplements & Medications screen
+   Premium feature — Locked (Essentials) / Empty / Populated states
+   ================================================================= */
+function renderSupplements() {
+  const isLocked = state.devEssentialsTier; // dev toggle
+  const entries = DATA.supplements.entries.filter(e => !e.stoppedDate);
+  const supplements = entries.filter(e => e.type === 'supplement').sort((a, b) => a.name.localeCompare(b.name));
+  const medications = entries.filter(e => e.type === 'medication').sort((a, b) => a.name.localeCompare(b.name));
+
+  if (isLocked) {
+    return renderSupplementsLocked();
+  }
+
+  if (entries.length === 0) {
+    return renderSupplementsEmpty();
+  }
+
+  return `
+    <section class="screen ${state.currentScreen === 'supplements' ? 'screen--active' : ''}" data-screen="supplements">
+      <div class="top-bar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="modal-header__close" data-nav="profile" style="width: 32px; height: 32px;">‹</button>
+          <div style="font-size: 17px; font-weight: var(--weight-medium);">Supplements and Medications</div>
+        </div>
+        <button class="top-bar__action" data-nav="supplement-picker" aria-label="Add">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1;">
+        <section class="reg-section">
+          <div class="reg-section__head">
+            <div class="reg-section__label">Supplements</div>
+            <div class="reg-section__label">${supplements.length} tracked</div>
+          </div>
+          ${supplements.map(renderSupplementCard).join('')}
+          <button class="reg-add-tile" data-nav="supplement-picker">
+            <div class="reg-add-tile__icon">+</div>
+            <div>
+              <div class="reg-add-tile__text-main">Add a supplement</div>
+              <div class="reg-add-tile__text-sub">Pick from common ones or add your own</div>
+            </div>
+          </button>
+        </section>
+
+        <section class="reg-section">
+          <div class="reg-section__head">
+            <div class="reg-section__label">Medications</div>
+            <div class="reg-section__label">${medications.length === 0 ? 'None' : medications.length + ' tracked'}</div>
+          </div>
+          ${medications.map(renderSupplementCard).join('')}
+          <button class="reg-add-tile" data-nav="supplement-picker">
+            <div class="reg-add-tile__icon">+</div>
+            <div>
+              <div class="reg-add-tile__text-main">Add a medication</div>
+              <div class="reg-add-tile__text-sub">Prescriptions, injections, anything regular</div>
+            </div>
+          </button>
+        </section>
+
+        <!-- Demo link to chat card example -->
+        <section class="reg-section" style="padding-top: 4px;">
+          <button class="reg-add-tile" data-nav="supplement-chat-demo" style="border-style: solid; background: var(--color-bg-secondary); border-color: var(--color-bg-secondary);">
+            <div class="reg-add-tile__icon" style="background: var(--color-accent); color: #fff;">AI</div>
+            <div>
+              <div class="reg-add-tile__text-main">See chat add demo</div>
+              <div class="reg-add-tile__text-sub">How supplements auto-fill from chat conversations</div>
+            </div>
+          </button>
+        </section>
+      </div>
+    </section>`;
+}
+
+function renderSupplementCard(entry) {
+  /* Variant A — status bar left edge */
+  const linkedClass = entry.linkedMarker
+    ? (entry.linkedMarker.status === 'low' ? 'reg-card--for-low' : 'reg-card--for-high')
+    : 'reg-card--standalone';
+
+  /* Dose format: inline `[amount] [unit] · [frequency]` + day for weekly/monthly */
+  let doseLine = `${entry.dose} ${entry.unit} · ${entry.frequency}`;
+  if (entry.frequency === 'weekly' && typeof entry.frequencyDay === 'number') {
+    const days = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
+    doseLine = `${entry.dose} ${entry.unit} · weekly on ${days[entry.frequencyDay]}`;
+  }
+
+  const linkedTag = entry.linkedMarker
+    ? `<span class="reg-card__tag reg-card__tag--${entry.linkedMarker.status}">${entry.linkedMarker.status === 'low' ? '↓' : '↑'} For ${entry.linkedMarker.name}</span>`
+    : '';
+
+  const retestMeta = entry.retestDate
+    ? `<span class="reg-card__meta-item reg-card__retest">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Retest ${entry.retestDate}
+      </span>`
+    : '';
+
+  return `
+    <button class="reg-card ${linkedClass}" data-supplement-edit="${entry.id}">
+      <div class="reg-card__head">
+        <div class="reg-card__name">${entry.name}</div>
+        <div class="reg-card__dose">${doseLine}</div>
+      </div>
+      <div class="reg-card__meta">
+        <span class="reg-card__meta-item">Started ${entry.startedDate}</span>
+        ${retestMeta}
+        ${linkedTag}
+      </div>
+    </button>`;
+}
+
+function renderSupplementsLocked() {
+  return `
+    <section class="screen ${state.currentScreen === 'supplements' ? 'screen--active' : ''}" data-screen="supplements">
+      <div class="top-bar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="modal-header__close" data-nav="profile" style="width: 32px; height: 32px;">‹</button>
+          <div style="font-size: 17px; font-weight: var(--weight-medium);">Supplements and Medications</div>
+        </div>
+        <button class="top-bar__action top-bar__action--disabled" aria-label="Premium required">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="reg-locked-hero">
+        <div class="reg-locked-hero__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div class="reg-locked-hero__title">Track What You're Taking</div>
+        <div class="reg-locked-hero__sub">Available with Premium. Your AI nutritionist factors in your regimen for more accurate advice.</div>
+        <div class="reg-locked-hero__features">
+          <div class="reg-locked-hero__feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Log supplements and medications</span>
+          </div>
+          <div class="reg-locked-hero__feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>AI accounts for your regimen in recommendations</span>
+          </div>
+          <div class="reg-locked-hero__feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Daily reminders and retest tracking</span>
+          </div>
+        </div>
+        <button class="cta-primary" data-nav="plans" style="width: auto; padding: 12px 24px;">Upgrade to Premium</button>
+      </div>
+    </section>`;
+}
+
+function renderSupplementsEmpty() {
+  return `
+    <section class="screen ${state.currentScreen === 'supplements' ? 'screen--active' : ''}" data-screen="supplements">
+      <div class="top-bar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="modal-header__close" data-nav="profile" style="width: 32px; height: 32px;">‹</button>
+          <div style="font-size: 17px; font-weight: var(--weight-medium);">Supplements and Medications</div>
+        </div>
+        <button class="top-bar__action" data-nav="supplement-picker" aria-label="Add">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="reg-empty-hero">
+        <div class="reg-empty-hero__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.5 20.5l-7-7a4.95 4.95 0 0 1 7-7l7 7a4.95 4.95 0 0 1-7 7z"/>
+            <line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/>
+          </svg>
+        </div>
+        <div class="reg-empty-hero__title">Nothing tracked yet</div>
+        <div class="reg-empty-hero__sub">Add what you're taking — supplements, vitamins, or medications. Your AI nutritionist will factor it in.</div>
+        <button class="cta-primary" data-nav="supplement-picker" style="width: auto; padding: 12px 24px;">+ Add Your First</button>
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3e Supplement Add Picker — common list + custom + medication
+   ================================================================= */
+function renderSupplementPicker() {
+  const templates = DATA.supplements.commonTemplates;
+
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'supplement-picker' ? 'screen--active' : ''}" data-screen="supplement-picker">
+      <div class="modal-header">
+        <div class="modal-header__title">Add to Your Regimen</div>
+        <button class="modal-header__close" data-nav="supplements">✕</button>
+      </div>
+
+      <div class="picker-modal-body">
+        <div class="picker-modal-section-label">Common supplements</div>
+        <div class="picker-list">
+          ${templates.map(t => `
+            <button class="picker-row" data-supplement-template="${t.name}">
+              ${t.name}<span class="picker-row__chev">›</span>
+            </button>
+          `).join('')}
+        </div>
+
+        <div class="picker-modal-section-label">Or</div>
+        <div class="picker-list">
+          <button class="picker-row picker-row--custom" data-supplement-custom="1">
+            + Add custom supplement<span class="picker-row__chev">›</span>
+          </button>
+          <button class="picker-row picker-row--custom" data-supplement-medication="1">
+            + Add medication<span class="picker-row__chev">›</span>
+          </button>
+        </div>
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3f Supplement Add/Edit Form
+   Used in both add and edit modes. Edit mode shows Stopped + Delete.
+   Demo: shows Vitamin D3 template-filled state for "add", or
+   Sarah's Vitamin D3 entry for "edit".
+   ================================================================= */
+function renderSupplementForm() {
+  const isEdit = state.supplementFormMode === 'edit';
+  const isCustom = state.supplementFormCustom;
+
+  /* Demo data for add-template state: Vitamin D3 with weekly frequency */
+  /* Demo data for edit state: pull from DATA.supplements.entries by ID */
+  let entry = null;
+  let templateName = state.supplementFormTemplate;
+
+  if (isEdit && state.supplementEditingId) {
+    entry = DATA.supplements.entries.find(e => e.id === state.supplementEditingId);
+    templateName = entry ? entry.name : null;
+  }
+
+  const title = isEdit && entry ? entry.name : 'New Supplement';
+  const ctaLabel = isEdit ? 'Save Changes' : 'Save';
+  const showNameBanner = templateName && !isCustom;
+  const showCustomNameField = isCustom && !isEdit;
+
+  /* Pre-fill values for demo */
+  const doseValue = isEdit && entry ? entry.dose : '';
+  const unitValue = isEdit && entry ? entry.unit : (templateName ? (DATA.supplements.commonTemplates.find(t => t.name === templateName)?.defaultUnit || 'IU') : '');
+  const freqValue = isEdit && entry ? entry.frequency : 'weekly';
+  const startedValue = isEdit && entry ? entry.startedDate : 'May 18, 2026';
+  const retestValue = isEdit && entry ? entry.retestDate : '';
+  const showWeeklyDayPicker = freqValue === 'weekly';
+  const selectedDay = isEdit && entry ? entry.frequencyDay : 0;
+
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'supplement-form' || state.currentScreen === 'supplement-edit' ? 'screen--active' : ''}" data-screen="supplement-form">
+      <div class="modal-header">
+        <div class="modal-header__title">${title}</div>
+        <button class="modal-header__close" data-nav="supplements">✕</button>
+      </div>
+
+      <div class="form-scroll">
+        ${showNameBanner ? `
+          <div class="name-banner">
+            <div class="name-banner__icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.5 20.5l-7-7a4.95 4.95 0 0 1 7-7l7 7a4.95 4.95 0 0 1-7 7z"/>
+                <line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/>
+              </svg>
+            </div>
+            <div>
+              <div class="name-banner__label">${isEdit ? 'Editing' : 'Adding'}</div>
+              <div class="name-banner__name">${templateName}</div>
+            </div>
+          </div>
+        ` : ''}
+
+        ${showCustomNameField ? `
+          <div class="form-field">
+            <label class="form-field__label">Name</label>
+            <input type="text" class="form-input form-input--placeholder" placeholder="e.g. Ashwagandha" />
+          </div>
+        ` : ''}
+
+        <div class="form-field">
+          <label class="form-field__label">Dose</label>
+          <div class="form-row-dose">
+            <input type="text" class="form-input ${doseValue ? '' : 'form-input--placeholder'}" placeholder="e.g. 5000" value="${doseValue}" />
+            <select class="form-select">
+              <option ${unitValue === 'IU' ? 'selected' : ''}>IU</option>
+              <option ${unitValue === 'mg' ? 'selected' : ''}>mg</option>
+              <option ${unitValue === 'mcg' ? 'selected' : ''}>mcg</option>
+              <option ${unitValue === 'g' ? 'selected' : ''}>g</option>
+              <option ${unitValue === 'capsule' ? 'selected' : ''}>capsule</option>
+              <option ${unitValue === 'scoop' ? 'selected' : ''}>scoop</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-field__label">How often</label>
+          <select class="form-select">
+            <option ${freqValue === 'weekly' ? 'selected' : ''}>Weekly</option>
+            <option ${freqValue === 'daily' ? 'selected' : ''}>Daily</option>
+            <option>Twice weekly</option>
+            <option>Monthly</option>
+            <option>As needed</option>
+          </select>
+          ${showWeeklyDayPicker ? `
+            <div class="form-day-picker">
+              <button class="form-day-chip ${selectedDay === 0 ? 'form-day-chip--active' : ''}">Sun</button>
+              <button class="form-day-chip ${selectedDay === 1 ? 'form-day-chip--active' : ''}">Mon</button>
+              <button class="form-day-chip ${selectedDay === 2 ? 'form-day-chip--active' : ''}">Tue</button>
+              <button class="form-day-chip ${selectedDay === 3 ? 'form-day-chip--active' : ''}">Wed</button>
+              <button class="form-day-chip ${selectedDay === 4 ? 'form-day-chip--active' : ''}">Thu</button>
+              <button class="form-day-chip ${selectedDay === 5 ? 'form-day-chip--active' : ''}">Fri</button>
+              <button class="form-day-chip ${selectedDay === 6 ? 'form-day-chip--active' : ''}">Sat</button>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="form-field">
+          <label class="form-field__label">Started</label>
+          <input type="text" class="form-input" value="${startedValue}" />
+        </div>
+
+        <div class="form-field">
+          <label class="form-field__label">Linked to a marker <span class="form-field__label-optional">(optional)</span></label>
+          <select class="form-select">
+            <option>${isEdit && entry && entry.linkedMarker ? entry.linkedMarker.name : 'Not linked'}</option>
+            <option>Not linked</option>
+            <option>Ferritin (low)</option>
+            <option>Vitamin D (low)</option>
+            <option>Cortisol (high)</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label class="form-field__label">Retest reminder <span class="form-field__label-optional">(optional)</span></label>
+          <input type="text" class="form-input ${retestValue ? '' : 'form-input--placeholder'}" placeholder="Set a date" value="${retestValue}" />
+        </div>
+
+        <div class="form-field">
+          <div class="form-toggle-row form-toggle-row--phase2">
+            <div>
+              <div class="form-toggle-row__label">Weekly reminder</div>
+              <div class="form-toggle-row__sub">Push notification on your chosen day</div>
+              <div class="form-toggle-coming">Coming soon</div>
+            </div>
+            <div class="form-toggle-pill"></div>
+          </div>
+        </div>
+
+        ${isEdit ? `
+          <div class="form-section-divider"></div>
+
+          <div class="form-field">
+            <div class="form-toggle-row">
+              <div>
+                <div class="form-toggle-row__label">Stopped taking this</div>
+                <div class="form-toggle-row__sub">AI keeps the history but won't treat it as current</div>
+              </div>
+              <div class="form-toggle-pill"></div>
+            </div>
+          </div>
+
+          <div class="form-field" style="margin-bottom: 0;">
+            <button class="form-delete-action">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6"/>
+                <path d="M14 11v6"/>
+              </svg>
+              Delete this supplement
+            </button>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="form-footer-cta">
+        <button class="cta-primary" data-nav="supplements">${ctaLabel}</button>
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3g Chat auto-fill confirmation card demo
+   Standalone "demo" screen showing the chat experience when the AI
+   parses a supplement mention. Reaches confirmation card flow.
+   ================================================================= */
+function renderSupplementChatDemo() {
+  return `
+    <section class="screen screen--modal ${state.currentScreen === 'supplement-chat-demo' ? 'screen--active' : ''}" data-screen="supplement-chat-demo">
+      <div class="modal-header">
+        <div class="modal-header__title">Chat — Auto-fill demo</div>
+        <button class="modal-header__close" data-nav="supplements">✕</button>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1; padding: 16px var(--space-section-x); display: flex; flex-direction: column; gap: 14px;">
+        <div class="chat-bubble-ai">Morning, Sarah. How can I help today?</div>
+        <div class="chat-bubble-user">I started taking creatine last Monday, 5g daily</div>
+        <div class="chat-bubble-ai">Got it — Creatine is a solid choice for strength and recovery.</div>
+
+        <div class="confirm-card">
+          <div class="confirm-card__head">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add to your supplements
+          </div>
+          <div class="confirm-card__body">
+            <div class="confirm-card__name">Creatine</div>
+            <div class="confirm-card__meta">5 g · daily</div>
+            <div class="confirm-card__meta confirm-card__meta-sub">Started May 18, 2026</div>
+          </div>
+          <div class="confirm-card__actions">
+            <button class="confirm-card__action">Cancel</button>
+            <button class="confirm-card__action">Edit</button>
+            <button class="confirm-card__action confirm-card__action--primary">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 10px var(--space-section-x) 22px; background: var(--color-bg-primary); border-top: var(--space-divider) solid var(--color-border-tertiary); flex-shrink: 0; display: flex; align-items: center; gap: 8px;">
+        <div style="flex: 1; padding: 10px 14px; background: var(--color-bg-secondary); border-radius: 999px; font-size: 14px; color: var(--color-text-secondary);">Type a message…</div>
+        <button style="width: 36px; height: 36px; border-radius: 50%; background: var(--color-accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; border: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3h Pass A — Blood Test History (Profile sub-page)
+   ================================================================= */
+function renderBloodTestHistory() {
+  const panels = DATA.bloodPanelHistory;
+  return `
+    <section class="screen ${state.currentScreen === 'blood-test-history' ? 'screen--active' : ''}" data-screen="blood-test-history">
+      <div class="history-top-bar">
+        <div class="history-top-bar__left">
+          <button class="modal-header__close" data-nav="profile" style="width: 32px; height: 32px;">‹</button>
+          <div style="font-size: 17px; font-weight: var(--weight-medium);">Blood Test History</div>
+        </div>
+        <button class="top-bar__action" data-nav="upload-source" aria-label="Add blood test">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1;">
+        <section class="history-section">
+          <div class="history-section__head">
+            <div class="history-section__label">All panels</div>
+            <div class="history-section__label">${panels.length} panels</div>
+          </div>
+          ${panels.map((panel, idx) => `
+            <div class="card-row ${idx === 2 ? 'card-row--swiped-left' : ''}">
+              <div class="card-row__delete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                Delete
+              </div>
+              <button class="card-row__card" data-nav="panel-detail" data-panel-id="${panel.id}">
+                <div class="history-card__head">
+                  <div class="history-card__date">${panel.date}</div>
+                  <div class="history-card__chev">›</div>
+                </div>
+                <div class="history-card__meta">
+                  <span>${panel.markerCount} markers · ${panel.lab}</span>
+                  ${panel.flaggedCount > 0 ? `<span class="history-card__flag-badge ${panel.flaggedHighest === 'high' ? 'history-card__flag-badge--high' : ''}">${panel.flaggedCount} flagged</span>` : ''}
+                </div>
+              </button>
+            </div>
+          `).join('')}
+        </section>
+
+        <div class="swipe-hint">Swipe left on any panel to delete</div>
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3i Pass A — InBody Scan History (Profile sub-page)
+   ================================================================= */
+function renderInBodyScanHistory() {
+  const scans = DATA.inbodyScanHistory;
+  return `
+    <section class="screen ${state.currentScreen === 'inbody-scan-history' ? 'screen--active' : ''}" data-screen="inbody-scan-history">
+      <div class="history-top-bar">
+        <div class="history-top-bar__left">
+          <button class="modal-header__close" data-nav="profile" style="width: 32px; height: 32px;">‹</button>
+          <div style="font-size: 17px; font-weight: var(--weight-medium);">InBody Scan History</div>
+        </div>
+        <button class="top-bar__action" data-nav="inbody-upload-source" aria-label="Add InBody scan">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1;">
+        <section class="history-section">
+          <div class="history-section__head">
+            <div class="history-section__label">All scans</div>
+            <div class="history-section__label">${scans.length} scans</div>
+          </div>
+          ${scans.map(scan => `
+            <div class="card-row">
+              <div class="card-row__delete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                Delete
+              </div>
+              <button class="card-row__card" data-nav="inbody-scan-detail" data-scan-id="${scan.id}">
+                <div class="history-card__head">
+                  <div class="history-card__date">${scan.date}</div>
+                  <div class="history-card__chev">›</div>
+                </div>
+                <div class="inbody-card-stats">
+                  <div>
+                    <div class="inbody-card-stat-label">Weight</div>
+                    <div class="inbody-card-stat-value">${scan.weight}<span class="inbody-card-stat-unit">kg</span></div>
+                  </div>
+                  <div>
+                    <div class="inbody-card-stat-label">Body Fat</div>
+                    <div class="inbody-card-stat-value">${scan.bodyFat}<span class="inbody-card-stat-unit">%</span></div>
+                  </div>
+                  <div>
+                    <div class="inbody-card-stat-label">Muscle</div>
+                    <div class="inbody-card-stat-value">${scan.muscle}<span class="inbody-card-stat-unit">kg</span></div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          `).join('')}
+        </section>
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3j Pass A — Panel Detail (variable-panel principle)
+   Demo: Dec 12, 2025 panel (8 markers)
+   ================================================================= */
+function renderPanelDetail() {
+  // For demo: always use Dec 12 panel (the one with full marker data)
+  const panel = DATA.bloodPanelHistory.find(p => p.id === 'panel-dec-2025');
+  if (!panel) return renderStub('panel-detail', 'Panel detail', 'Panel data not found.');
+
+  const flagged = panel.markers.filter(m => m.status === 'high' || m.status === 'low');
+  const normalByCategory = {};
+  panel.markers.filter(m => m.status === 'normal').forEach(m => {
+    if (!normalByCategory[m.category]) normalByCategory[m.category] = [];
+    normalByCategory[m.category].push(m);
+  });
+
+  return `
+    <section class="screen ${state.currentScreen === 'panel-detail' ? 'screen--active' : ''}" data-screen="panel-detail">
+      <div class="history-top-bar">
+        <div class="history-top-bar__left">
+          <button class="modal-header__close" data-nav="blood-test-history" style="width: 32px; height: 32px;">‹</button>
+          <div style="font-size: 17px; font-weight: var(--weight-medium);">Panel</div>
+        </div>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1;">
+        <div class="panel-header">
+          <div class="panel-header__date">${panel.date}</div>
+          <div class="panel-header__meta">
+            <span>${panel.lab}</span>
+            <span>${panel.markerCount} markers</span>
+            ${panel.flaggedCount > 0 ? `<span style="color: var(--color-danger);">${panel.flaggedCount} flagged</span>` : ''}
+          </div>
+        </div>
+
+        ${flagged.length > 0 ? `
+          <section class="panel-section">
+            <div class="panel-section__label">Needs Attention</div>
+            ${flagged.map(m => `
+              <div class="panel-flag-card panel-flag-card--${m.status}">
+                <div class="panel-flag-card__head">
+                  <div class="panel-flag-card__name">${m.name}</div>
+                  <div class="panel-flag-card__status">${m.status === 'high' ? '↑ HIGH' : '↓ LOW'}</div>
+                </div>
+                <div><span class="panel-flag-card__value">${m.value}<span class="panel-flag-card__value-unit">${m.unit}</span></span></div>
+                <div class="panel-flag-card__range">Reference range ${m.range}</div>
+              </div>
+            `).join('')}
+          </section>
+        ` : ''}
+
+        <section class="panel-section">
+          <div class="panel-section__label">All normal</div>
+          ${Object.entries(normalByCategory).map(([cat, markers]) => `
+            <div class="panel-category-group">
+              <div class="panel-category-label">${cat}</div>
+              ${markers.map(m => `
+                <div class="panel-normal-marker">
+                  <span class="status-dot"></span>
+                  <div class="panel-normal-marker__name">${m.name}</div>
+                  <div class="panel-normal-marker__value">${m.value} ${m.unit}</div>
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </section>
+
+        <div class="panel-note">
+          This panel contained ${panel.markerCount} markers. Other panels may include different markers — each lab visit can vary.
+        </div>
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3k Pass A — InBody Scan Detail
+   Demo: Mar 5, 2026 scan
+   ================================================================= */
+function renderInBodyScanDetail() {
+  // For demo: always use Mar 5 scan
+  const scan = DATA.inbodyScanHistory.find(s => s.id === 'scan-mar-2026');
+  if (!scan) return renderStub('inbody-scan-detail', 'Scan detail', 'Scan data not found.');
+
+  return `
+    <section class="screen ${state.currentScreen === 'inbody-scan-detail' ? 'screen--active' : ''}" data-screen="inbody-scan-detail">
+      <div class="history-top-bar">
+        <div class="history-top-bar__left">
+          <button class="modal-header__close" data-nav="inbody-scan-history" style="width: 32px; height: 32px;">‹</button>
+          <div style="font-size: 17px; font-weight: var(--weight-medium);">InBody Scan</div>
+        </div>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1;">
+        <div class="scan-header">
+          <div>
+            <div class="scan-header__date">${scan.date}</div>
+            <div class="scan-header__meta">${scan.lab} · Scan ${scan.scanNumber}</div>
+          </div>
+          <div>
+            <div class="scan-header__score-value">${scan.score}</div>
+            <div class="scan-header__score-label">InBody Score</div>
+          </div>
+        </div>
+
+        <section class="section">
+          <div class="section__head"><div class="section-label">Body Composition</div></div>
+          <div class="stat-grid">
+            <button class="stat-card" data-marker-detail="weight">
+              <div class="stat-card__label">Weight</div>
+              <div><span class="stat-card__value">${scan.weight}</span><span class="stat-card__unit">kg</span></div>
+            </button>
+            <button class="stat-card" data-marker-detail="body-fat">
+              <div class="stat-card__label">Body Fat</div>
+              <div><span class="stat-card__value">${scan.bodyFat}</span><span class="stat-card__unit">%</span></div>
+            </button>
+            <button class="stat-card" data-marker-detail="muscle-mass">
+              <div class="stat-card__label">Muscle Mass</div>
+              <div><span class="stat-card__value">${scan.muscle}</span><span class="stat-card__unit">kg</span></div>
+            </button>
+            <button class="stat-card" style="cursor: default;">
+              <div class="stat-card__label">Fat Mass</div>
+              <div><span class="stat-card__value">${scan.fatMass}</span><span class="stat-card__unit">kg</span></div>
+            </button>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__head"><div class="section-label">Body Stats</div></div>
+          <div class="stats-row"><div class="stats-row__label">BMR</div><div class="stats-row__value">${scan.bmr} kcal</div></div>
+          <div class="stats-row"><div class="stats-row__label">Visceral Fat Level</div><div class="stats-row__value">${scan.visceralFat}</div></div>
+          <div class="stats-row"><div class="stats-row__label">Total Body Water</div><div class="stats-row__value">${scan.water} L</div></div>
+          <div class="stats-row"><div class="stats-row__label">Protein</div><div class="stats-row__value">${scan.protein} kg</div></div>
+          <div class="stats-row"><div class="stats-row__label">Minerals</div><div class="stats-row__value">${scan.minerals} kg</div></div>
+        </section>
+
+        ${Object.keys(scan.segments).length > 0 ? `
+          <section class="section">
+            <div class="section__head"><div class="section-label">Segmental Lean Analysis</div></div>
+            <div class="stats-row"><div class="stats-row__label">Left arm</div><div class="stats-row__value">${scan.segments.leftArm.kg} kg · ${scan.segments.leftArm.pct}%</div></div>
+            <div class="stats-row"><div class="stats-row__label">Right arm</div><div class="stats-row__value">${scan.segments.rightArm.kg} kg · ${scan.segments.rightArm.pct}%</div></div>
+            <div class="stats-row"><div class="stats-row__label">Trunk</div><div class="stats-row__value">${scan.segments.trunk.kg} kg · ${scan.segments.trunk.pct}%</div></div>
+            <div class="stats-row"><div class="stats-row__label">Left leg</div><div class="stats-row__value" style="color: ${scan.segments.leftLeg.status === 'lower' ? 'var(--color-warn)' : 'var(--color-text-secondary)'};">${scan.segments.leftLeg.kg} kg · ${scan.segments.leftLeg.pct}%</div></div>
+            <div class="stats-row"><div class="stats-row__label">Right leg</div><div class="stats-row__value">${scan.segments.rightLeg.kg} kg · ${scan.segments.rightLeg.pct}%</div></div>
+          </section>
+        ` : ''}
+      </div>
+    </section>`;
+}
+
+/* =================================================================
+   7.5.3l Pass A — Food Library (chat-saved meals)
+   ================================================================= */
+function renderFoodLibrary() {
+  const entries = DATA.foodLibrary.entries;
+
+  if (entries.length === 0) {
+    return `
+      <section class="screen ${state.currentScreen === 'food-library' ? 'screen--active' : ''}" data-screen="food-library">
+        <div class="history-top-bar">
+          <div class="history-top-bar__left">
+            <button class="modal-header__close" data-nav="profile" style="width: 32px; height: 32px;">‹</button>
+            <div style="font-size: 17px; font-weight: var(--weight-medium);">Food Library</div>
+          </div>
+        </div>
+        <div class="lib-empty-hero">
+          <div class="lib-empty-hero__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16l7-3 7 3z"/>
+            </svg>
+          </div>
+          <div class="lib-empty-hero__title">No meals saved yet</div>
+          <div class="lib-empty-hero__sub">Meals you save in chat show up here.</div>
+          <div class="lib-empty-hero__example">
+            <div class="lib-empty-hero__example-label">Try saying</div>
+            <div class="lib-empty-hero__example-quote">"Save this as my usual breakfast"</div>
+            <div class="lib-empty-hero__example-quote" style="margin-top: 8px;">"Save this — call it 'Chicken Avocado Salad'"</div>
+          </div>
+        </div>
+      </section>`;
+  }
+
+  return `
+    <section class="screen ${state.currentScreen === 'food-library' ? 'screen--active' : ''}" data-screen="food-library">
+      <div class="history-top-bar">
+        <div class="history-top-bar__left">
+          <button class="modal-header__close" data-nav="profile" style="width: 32px; height: 32px;">‹</button>
+          <div style="font-size: 17px; font-weight: var(--weight-medium);">Food Library</div>
+        </div>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1;">
+        <section class="history-section">
+          <div class="history-section__head">
+            <div class="history-section__label">Your saved meals</div>
+            <div class="history-section__label">${entries.length} meals</div>
+          </div>
+          ${entries.map((meal, idx) => {
+            // Demo swipe states: 3rd card swiped left, 4th swiped right
+            let swipeClass = '';
+            if (idx === 2) swipeClass = 'card-row--swiped-left';
+            else if (idx === 3) swipeClass = 'card-row--swiped-right';
+
+            return `
+              <div class="card-row ${swipeClass}">
+                <div class="card-row__edit">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  Edit
+                </div>
+                <div class="card-row__delete">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                  Delete
+                </div>
+                <button class="card-row__card">
+                  <div class="food-card__head">
+                    <div class="food-card__name">${meal.name}</div>
+                    <div class="food-card__kcal">${meal.kcal} kcal</div>
+                  </div>
+                  ${meal.restaurant ? `<div class="food-card__restaurant">From ${meal.restaurant}</div>` : ''}
+                  <div class="food-card__meta">
+                    <div class="food-card__macros">
+                      <span class="food-card__macro"><strong>${meal.protein}g</strong> P</span>
+                      <span class="food-card__macro"><strong>${meal.fat}g</strong> F</span>
+                      <span class="food-card__macro"><strong>${meal.carbs}g</strong> C</span>
+                    </div>
+                    <span class="food-card__times">Logged ${meal.timesLogged}×</span>
+                  </div>
+                </button>
+              </div>
+            `;
+          }).join('')}
+        </section>
+
+        <div class="swipe-hint">
+          <span class="swipe-hint__row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A7FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            Swipe right to edit
+          </span>
+          <span class="swipe-hint__row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C57676" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Swipe left to delete
+          </span>
+        </div>
       </div>
     </section>`;
 }
@@ -3182,20 +5436,20 @@ function renderProfile() {
 
       <section class="section">
         <div class="section__head"><div class="section-label">Records</div></div>
-        <div class="profile-row" data-nav="stub-food">
+        <div class="profile-row" data-nav="food-library">
           <div class="profile-row__label">Food Library</div>
           <div class="profile-row__right">›</div>
         </div>
-        <div class="profile-row" data-nav="upload-source">
+        <div class="profile-row" data-nav="blood-test-history">
           <div class="profile-row__label">Blood Test History</div>
           <div class="profile-row__right">›</div>
         </div>
-        <div class="profile-row" data-nav="upload-source">
+        <div class="profile-row" data-nav="inbody-scan-history">
           <div class="profile-row__label">InBody Scan History</div>
           <div class="profile-row__right">›</div>
         </div>
-        <div class="profile-row" data-nav="stub-supplements-treatments">
-          <div class="profile-row__label">Supplements &amp; Treatments</div>
+        <div class="profile-row" data-nav="supplements">
+          <div class="profile-row__label">Supplements and Medications</div>
           <div class="profile-row__right">›</div>
         </div>
       </section>
@@ -3228,12 +5482,16 @@ function renderProfile() {
         </div>
       </section>
 
-      <!-- Dev-only Reset Onboarding section — visible only in development builds -->
+      <!-- Dev-only section — visible only in development builds -->
       <section class="section">
         <div class="section__head"><div class="section-label">Developer</div></div>
         <div class="profile-row" data-nav="onboarding-welcome">
           <div class="profile-row__label" style="color: var(--color-text-secondary);">Reset Onboarding (Dev)</div>
           <div class="profile-row__right" style="color: var(--color-text-secondary);">›</div>
+        </div>
+        <div class="profile-row" data-toggle-essentials="1">
+          <div class="profile-row__label" style="color: var(--color-text-secondary);">Toggle Essentials Tier (Dev)</div>
+          <div class="profile-row__right" style="color: var(--color-text-secondary);">${state.devEssentialsTier ? 'ON' : 'OFF'}</div>
         </div>
       </section>
 
@@ -3560,6 +5818,20 @@ function render() {
   else if (s === 'upload-source') screenMarkup = renderUploadSource();
   else if (s === 'upload-parsing') screenMarkup = renderUploadParsing();
   else if (s === 'upload-success') screenMarkup = renderUploadSuccess();
+  else if (s === 'upload-picker') screenMarkup = renderUploadPicker();
+  else if (s === 'inbody-upload-source') screenMarkup = renderInBodyUploadSource();
+  else if (s === 'inbody-upload-parsing') screenMarkup = renderInBodyUploadParsing();
+  else if (s === 'inbody-upload-success') screenMarkup = renderInBodyUploadSuccess();
+  else if (s === 'supplements') screenMarkup = renderSupplements();
+  else if (s === 'supplement-picker') screenMarkup = renderSupplementPicker();
+  else if (s === 'supplement-form') screenMarkup = renderSupplementForm();
+  else if (s === 'supplement-edit') screenMarkup = renderSupplementForm();
+  else if (s === 'supplement-chat-demo') screenMarkup = renderSupplementChatDemo();
+  else if (s === 'blood-test-history') screenMarkup = renderBloodTestHistory();
+  else if (s === 'inbody-scan-history') screenMarkup = renderInBodyScanHistory();
+  else if (s === 'panel-detail') screenMarkup = renderPanelDetail();
+  else if (s === 'inbody-scan-detail') screenMarkup = renderInBodyScanDetail();
+  else if (s === 'food-library') screenMarkup = renderFoodLibrary();
   else if (s === 'stub-photos') screenMarkup = renderStub('stub-photos', 'Progress photos', 'This screen is stubbed pending a dedicated design session. The final design will cover upload cadence, compare views, and privacy controls.');
   else if (s === 'stub-food') screenMarkup = renderStub('stub-food', 'Food library', 'This screen is stubbed pending a dedicated design session. Open questions: saved meals vs. Kuwait food database, search, custom recipes.');
   else if (s === 'stub-blood-history') screenMarkup = renderStub('stub-blood-history', 'Blood test history', 'This is also the upload entry point for blood tests. User can photograph a printed report or pick a digital PDF. After parsing, a mandatory confirmation screen shows extracted values in editable fields. Needs design for: upload flow, parsing progress, confirmation screen, history archive, and per-draw summary views.');
@@ -3567,7 +5839,6 @@ function render() {
   else if (s === 'stub-personal') screenMarkup = renderStub('stub-personal', 'Personal details', 'This screen is stubbed pending a dedicated design session. Needs design for editable profile fields and medical disclosures.');
   else if (s === 'stub-notifications') screenMarkup = renderStub('stub-notifications', 'Notifications', 'This screen is stubbed pending a dedicated design session. Needs product decisions on notification categories and per-category toggles.');
   else if (s === 'stub-devices') screenMarkup = renderStub('stub-devices', 'Connected devices', 'This screen is stubbed pending a dedicated design session. Needs decisions on supported integrations (Apple Health, Google Fit, Oura, Garmin, etc.).');
-  else if (s === 'stub-supplements-treatments') screenMarkup = renderStub('stub-supplements-treatments', 'Supplements & Treatments', 'List of supplements and treatments not tied to a flagged marker. Pending design — see also Marker Detail Treatment section.');
 
   content.innerHTML = screenMarkup;
   nav.innerHTML = renderBottomNav();
@@ -3581,7 +5852,7 @@ function render() {
 // One listener on app root handles every interaction. Keeps the code audit-friendly
 // and means adding a new navigable element is just adding a data-attribute.
 document.getElementById('app').addEventListener('click', (e) => {
-  const target = e.target.closest('[data-nav], [data-subtab-switch], [data-labtab-switch], [data-trends-dropdown], [data-trend-select], [data-cycle], [data-water-add], [data-billing-view-toggle], [data-marker-detail]');
+  const target = e.target.closest('[data-nav], [data-subtab-switch], [data-labtab-switch], [data-trends-dropdown], [data-trend-select], [data-cycle], [data-water-add], [data-billing-view-toggle], [data-marker-detail], [data-supplement-template], [data-supplement-custom], [data-supplement-medication], [data-supplement-edit], [data-toggle-essentials]');
   if (!target) {
     // Click outside of dropdown closes it
     if (state.trendsDropdownOpen && !e.target.closest('.trends-dropdown-panel')) {
@@ -3596,6 +5867,56 @@ document.getElementById('app').addEventListener('click', (e) => {
     state.currentScreen = target.dataset.nav;
     if (target.dataset.subtab) state.nutritionTab = target.dataset.subtab;
     state.trendsDropdownOpen = false;
+    render();
+    return;
+  }
+
+  // Supplement template pick — opens add form pre-filled
+  if (target.dataset.supplementTemplate) {
+    state.supplementFormMode = 'add';
+    state.supplementFormTemplate = target.dataset.supplementTemplate;
+    state.supplementFormCustom = false;
+    state.supplementEditingId = null;
+    state.currentScreen = 'supplement-form';
+    render();
+    return;
+  }
+
+  // Supplement custom add
+  if (target.dataset.supplementCustom) {
+    state.supplementFormMode = 'add';
+    state.supplementFormTemplate = null;
+    state.supplementFormCustom = true;
+    state.supplementEditingId = null;
+    state.currentScreen = 'supplement-form';
+    render();
+    return;
+  }
+
+  // Supplement medication add
+  if (target.dataset.supplementMedication) {
+    state.supplementFormMode = 'add';
+    state.supplementFormTemplate = null;
+    state.supplementFormCustom = true;
+    state.supplementEditingId = null;
+    state.currentScreen = 'supplement-form';
+    render();
+    return;
+  }
+
+  // Supplement card tap — opens edit form
+  if (target.dataset.supplementEdit) {
+    state.supplementFormMode = 'edit';
+    state.supplementEditingId = target.dataset.supplementEdit;
+    state.supplementFormCustom = false;
+    state.currentScreen = 'supplement-edit';
+    render();
+    return;
+  }
+
+  // Dev: toggle Essentials tier (shows Supplements locked state)
+  if (target.dataset.toggleEssentials) {
+    state.devEssentialsTier = !state.devEssentialsTier;
     render();
     return;
   }
